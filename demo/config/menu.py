@@ -13,15 +13,7 @@ def _is_staff(request) -> bool:
     return request.user.is_staff
 
 ADMINLTE_MENU = [
-    {
-        "text": "Dashboard",
-        "icon": "bi bi-speedometer",
-        "submenu": [
-            {"text": "Dashboard v1", "route": "dashboard", "icon": _circle},
-            {"text": "Dashboard v2", "route": "index2", "icon": _circle},
-            {"text": "Dashboard v3", "route": "index3", "icon": _circle},
-        ],
-    },
+    {"text": "Dashboard", "route": "index3", "icon": "bi bi-speedometer"},
     {"text": "Theme Generate", "route": "generate_theme", "icon": "bi bi-palette"},
     {"text": "Components", "route": "components_v2", "icon": "bi bi-puzzle", "label": "NEW", "label_color": "success"},
     {"text": "Messages + Pagination", "route": "native_demo", "icon": "bi bi-bell"},

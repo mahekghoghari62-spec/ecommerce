@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django_vite",
     "django_tables2",
     "django_filters",
+    "django.forms",
     "crispy_forms",
     "crispy_bootstrap5",
     "allauth",
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     "dashboard",
     "accounts",
     "crud",
+    "shop",
 ]
 
 MIDDLEWARE = [

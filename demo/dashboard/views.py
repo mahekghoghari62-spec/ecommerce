@@ -1,14 +1,17 @@
 import datetime
+from decimal import Decimal
 
 from django import forms
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count
-from django.db.models.functions import TruncMonth
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth, TruncDate
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from crud.models import Company, Contact, Project, Task
+from shop.models import Order, OrderItem, SiteVisit
 
 
 class NativeContactForm(forms.ModelForm):
@@ -146,3 +149,104 @@ def components_v2(request):
         ],
     }
     return render(request, "showcase/components.html", ctx)
+
+
+def index3(request):
+    """Dashboard v3 — Online Store Overview, wired to real `shop` app data."""
+    now = timezone.now()
+    today = now.date()
+
+    # ---------- Visitors (last 7 days vs previous 7 days) ----------
+    week_start = today - datetime.timedelta(days=6)
+    prev_week_start = week_start - datetime.timedelta(days=7)
+    prev_week_end = week_start - datetime.timedelta(days=1)
+
+    visitors_this_week = SiteVisit.objects.filter(visited_at__date__gte=week_start).count()
+    visitors_last_week = SiteVisit.objects.filter(
+        visited_at__date__gte=prev_week_start, visited_at__date__lte=prev_week_end
+    ).count()
+
+    visitors_change_pct = (
+        round((visitors_this_week - visitors_last_week) * 100 / visitors_last_week, 1)
+        if visitors_last_week else 0
+    )
+
+    # Daily visitor counts for the last 7 days (for the line chart)
+    visitor_days = [week_start + datetime.timedelta(days=i) for i in range(7)]
+    visits_by_day = (
+        SiteVisit.objects.filter(visited_at__date__gte=week_start)
+        .annotate(day=TruncDate("visited_at"))
+        .values("day")
+        .annotate(count=Count("id"))
+    )
+    visits_map = {row["day"]: row["count"] for row in visits_by_day}
+    visitors_series_this_week = [visits_map.get(day, 0) for day in visitor_days]
+
+    prev_visitor_days = [prev_week_start + datetime.timedelta(days=i) for i in range(7)]
+    prev_visits_by_day = (
+        SiteVisit.objects.filter(visited_at__date__gte=prev_week_start, visited_at__date__lte=prev_week_end)
+        .annotate(day=TruncDate("visited_at"))
+        .values("day")
+        .annotate(count=Count("id"))
+    )
+    prev_visits_map = {row["day"]: row["count"] for row in prev_visits_by_day}
+    visitors_series_last_week = [prev_visits_map.get(day, 0) for day in prev_visitor_days]
+
+    # ---------- Sales (this year vs last year) ----------
+    sales_this_year = Order.objects.filter(
+        created_at__year=today.year
+    ).aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+
+    sales_last_year = Order.objects.filter(
+        created_at__year=today.year - 1
+    ).aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+
+    sales_change_pct = (
+        round(float(sales_this_year - sales_last_year) * 100 / float(sales_last_year), 1)
+        if sales_last_year else 0
+    )
+
+    # Monthly sales for the current year (for the bar chart)
+    monthly_sales = (
+        Order.objects.filter(created_at__year=today.year)
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(total=Sum("total_amount"))
+        .order_by("month")
+    )
+    sales_categories = [row["month"].strftime("%b") for row in monthly_sales]
+    sales_values = [float(row["total"]) for row in monthly_sales]
+
+    # ---------- Top products by units sold ----------
+    top_products = (
+        OrderItem.objects.values("product__id", "product__name", "product__price")
+        .annotate(total_sold=Sum("quantity"))
+        .order_by("-total_sold")[:4]
+    )
+
+    # ---------- Simple overview rates ----------
+    total_orders = Order.objects.count()
+    total_customers = Order.objects.values("customer").distinct().count()
+    total_visitors_ever = SiteVisit.objects.count()
+
+    conversion_rate = round(total_orders * 100 / total_visitors_ever, 1) if total_visitors_ever else 0
+
+    context = {
+        "visitors_total": visitors_this_week,
+        "visitors_change_pct": visitors_change_pct,
+        "visitors_categories": [d.strftime("%d") + "th" for d in visitor_days],
+        "visitors_series_this_week": visitors_series_this_week,
+        "visitors_series_last_week": visitors_series_last_week,
+
+        "sales_total": sales_this_year,
+        "sales_change_pct": sales_change_pct,
+        "sales_categories": sales_categories,
+        "sales_values": sales_values,
+
+        "top_products": top_products,
+
+        "conversion_rate": conversion_rate,
+        "total_orders": total_orders,
+        "total_customers": total_customers,
+    }
+    return render(request, "showcase/index3.html", context)

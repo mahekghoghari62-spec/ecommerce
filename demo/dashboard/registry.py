@@ -11,7 +11,7 @@ PAGES = [
     # ("" / Dashboard v1 is registered explicitly in urls.py — it is rendered
     # by a data-driven view, not the generic static-template view.)
     ("index2", "showcase/index2.html"),
-    ("index3", "showcase/index3.html"),
+
     # --- Theme generator ---
     ("generate/theme", "showcase/generate/theme.html"),
     # --- Widgets ---

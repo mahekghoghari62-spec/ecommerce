@@ -8,7 +8,9 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            # Multiple AUTHENTICATION_BACKENDS configured (ModelBackend + allauth),
+            # so Django needs to know explicitly which backend authenticated this user.
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("dashboard")
     else:
         form = UserCreationForm()
