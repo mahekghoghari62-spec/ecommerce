@@ -139,6 +139,8 @@ USE_TZ = True
 # --- Static files + Vite ---
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STATICFILES_DIRS = [
     BASE_DIR / "assets" / "dist",
     # Demo-only images (avatars, product shots, …) used by the showcase pages.
@@ -216,16 +218,31 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- AdminLTE configuration (mirrors config/adminlte.php and the HTML demo) ---
+# --- AdminLTE configuration (mirrors config/adminlte.php and the HTML demo) ---
 from config.menu import ADMINLTE_MENU, NAVBAR_MESSAGES, NAVBAR_NOTIFICATIONS, USERMENU  # noqa: E402
 
 ADMINLTE = {
     "title": "AdminLTE 4 · Django",
     "logo": "<b>Admin</b>LTE",
     "logo_alt_text": "AdminLTE 4",
-    "sidebar_docs_url": "https://django.adminlte.io/docs/",
     "menu": ADMINLTE_MENU,
-    "navbar_messages": NAVBAR_MESSAGES,
-    "navbar_notifications": NAVBAR_NOTIFICATIONS,
+    "navbar_search": False,
+    "navbar_messages": None,
+    "navbar_notifications": None,
     "usermenu": USERMENU,
-    "language_switcher": True,  # topbar dropdown -> django.views.i18n.set_language
+    "language_switcher": False,
+    "color_mode_toggle": False,
+}
+ADMINLTE = {
+    "title": "AdminLTE 4 · Django",
+    "logo": "<b>Admin</b>LTE",
+    "logo_alt_text": "AdminLTE 4",
+    "sidebar_docs_url": None,   # ← આ add કરો
+    "menu": ADMINLTE_MENU,
+    "navbar_search": False,
+    "navbar_messages": None,
+    "navbar_notifications": None,
+    "usermenu": USERMENU,
+    "language_switcher": False,
+    "color_mode_toggle": False,
 }
