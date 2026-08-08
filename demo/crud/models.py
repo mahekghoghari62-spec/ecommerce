@@ -32,7 +32,7 @@ class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, editable=False)
     customer_name = models.CharField(max_length=120)
     customer_email = models.EmailField(blank=True)
-    product_name = models.CharField(max_length=150)
+    product = models.ForeignKey("Product", on_delete=models.PROTECT, related_name="orders")
     quantity = models.PositiveIntegerField(default=1)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
@@ -201,8 +201,7 @@ class Pricing(models.Model):
         ("archived", "Archived"),
     ]
 
-    product_name = models.CharField(max_length=150)
-    sku = models.CharField(max_length=50, unique=True, blank=True)
+    product = models.ForeignKey("Product", on_delete=models.PROTECT, related_name="pricings")
     cost_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
@@ -216,7 +215,7 @@ class Pricing(models.Model):
         verbose_name_plural = "pricing"
 
     def __str__(self):
-        return f"{self.product_name} ({self.sku})" if self.sku else self.product_name
+        return f"{self.product} ({self.sku})" if self.sku else self.product.name
 
     def get_absolute_url(self):
         return reverse("crud:pricing_update", args=[self.pk])
@@ -283,8 +282,8 @@ class Inventory(models.Model):
         ("discontinued", "Discontinued"),
     ]
 
-    product_name = models.CharField(max_length=150)
-    sku = models.CharField(max_length=50, unique=True)
+    product = models.ForeignKey("Product", on_delete=models.PROTECT, related_name="inventory_items")
+    
     quantity = models.PositiveIntegerField(default=0)
     reorder_level = models.PositiveIntegerField(default=10)
     warehouse_location = models.CharField(max_length=100, blank=True)
@@ -294,11 +293,11 @@ class Inventory(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["product_name"]
+        ordering = ["product"]
         verbose_name_plural = "inventory"
 
     def __str__(self):
-        return f"{self.product_name} ({self.sku})"
+        return str(self.product)
 
     def get_absolute_url(self):
         return reverse("crud:inventory_update", args=[self.pk])
@@ -401,7 +400,7 @@ class Quality(models.Model):
         ("rework", "Rework"),
     ]
 
-    product_name = models.CharField(max_length=200)
+    product = models.ForeignKey("Product", on_delete=models.PROTECT, related_name="quality_checks")
     batch_number = models.CharField(max_length=50)
     inspector_name = models.CharField(max_length=150)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
@@ -414,7 +413,43 @@ class Quality(models.Model):
         verbose_name_plural = "Quality checks"
 
     def __str__(self):
-        return f"{self.product_name} — {self.batch_number}"
+        return f"{self.product.name} — {self.batch_number}"
 
     def get_absolute_url(self):
         return reverse("crud:quality_update", args=[self.pk])
+class Product(models.Model):
+    CATEGORY_CHOICES = [
+        ("electronics", "Electronics"),
+        ("fashion", "Fashion"),
+        ("home", "Home & Kitchen"),
+        ("beauty", "Beauty"),
+        ("grocery", "Grocery"),
+        ("other", "Other"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("draft", "Draft"),
+        ("inactive", "Inactive"),
+    ]
+
+    name = models.CharField(max_length=150)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to="products/", blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("crud:product_update", args=[self.pk])
+
+    @property
+    def status_color(self):
+        return {"active": "success", "draft": "warning", "inactive": "secondary"}.get(self.status, "secondary")

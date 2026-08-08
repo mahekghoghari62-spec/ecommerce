@@ -23,6 +23,7 @@ ADMINLTE_MENU = [
     {"text": "Catalog Uploads", "route": "crud:catalogupload_list", "icon": "bi bi-cloud-upload"},
     {"text": "Image Bulk Uploads", "route": "crud:imagebulkupload_list", "icon": "bi bi-images"},
     {"text": "Quality", "route": "crud:quality_list", "icon": "bi bi-clipboard-check"},
+    {"text": "Products", "route": "crud:product_list", "icon": "bi bi-box"},
 ]
 
 # --- Topbar dropdown data (mirrors _topbar.astro) ---

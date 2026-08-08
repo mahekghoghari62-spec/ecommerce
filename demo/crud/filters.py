@@ -1,7 +1,7 @@
 from django import forms
 
 import django_filters as filters
-from .models import CatalogUpload, Claim, Company, Contact, ImageBulkUpload, Inventory, Order, Pricing, Project, Quality, Return
+from .models import CatalogUpload, Claim, Company, Contact, ImageBulkUpload, Inventory, Order, Pricing, Product, Project, Quality, Return
 class OrderFilter(filters.FilterSet):
     order_number = filters.CharFilter(
         lookup_expr="icontains",
@@ -80,13 +80,9 @@ class ReturnFilter(filters.FilterSet):
 
 
 class PricingFilter(filters.FilterSet):
-    product_name = filters.CharFilter(
-        lookup_expr="icontains",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search product…"}),
-    )
-    sku = filters.CharFilter(
-        lookup_expr="icontains",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search SKU…"}),
+    product = filters.ModelChoiceFilter(
+        queryset=Product.objects.all(), empty_label="All products",
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     status = filters.ChoiceFilter(
         choices=Pricing.STATUS_CHOICES, empty_label="All statuses",
@@ -95,7 +91,8 @@ class PricingFilter(filters.FilterSet):
 
     class Meta:
         model = Pricing
-        fields = ["product_name", "sku", "status"]
+        fields = ["product", "status"]
+
 
 
 class ClaimFilter(filters.FilterSet):
@@ -118,14 +115,11 @@ class ClaimFilter(filters.FilterSet):
         fields = ["order__order_number", "claim_type", "status"]
 
 
+
 class InventoryFilter(filters.FilterSet):
-    product_name = filters.CharFilter(
-        lookup_expr="icontains",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search product…"}),
-    )
-    sku = filters.CharFilter(
-        lookup_expr="icontains",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search SKU…"}),
+    product = filters.ModelChoiceFilter(
+        queryset=Product.objects.all(), empty_label="All products",
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     status = filters.ChoiceFilter(
         choices=Inventory.STATUS_CHOICES, empty_label="All statuses",
@@ -134,7 +128,7 @@ class InventoryFilter(filters.FilterSet):
 
     class Meta:
         model = Inventory
-        fields = ["product_name", "sku", "status"]
+        fields = ["product", "status"]
 class CatalogUploadFilter(filters.FilterSet):
     file_name = filters.CharFilter(
         lookup_expr="icontains",
@@ -162,9 +156,9 @@ class ImageBulkUploadFilter(filters.FilterSet):
         model = ImageBulkUpload
         fields = ["name", "status"]
 class QualityFilter(filters.FilterSet):
-    product_name = filters.CharFilter(
-        lookup_expr="icontains",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search product…"}),
+    product = filters.ModelChoiceFilter(
+        queryset=Product.objects.all(), empty_label="All products",
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     batch_number = filters.CharFilter(
         lookup_expr="icontains",
@@ -177,4 +171,22 @@ class QualityFilter(filters.FilterSet):
 
     class Meta:
         model = Quality
-        fields = ["product_name", "batch_number", "status"]
+        fields = ["product", "batch_number", "status"]
+
+class ProductFilter(filters.FilterSet):
+    name = filters.CharFilter(
+        lookup_expr="icontains",
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search product…"}),
+    )
+    category = filters.ChoiceFilter(
+        choices=Product.CATEGORY_CHOICES, empty_label="All categories",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    status = filters.ChoiceFilter(
+        choices=Product.STATUS_CHOICES, empty_label="All statuses",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    class Meta:
+        model = Product
+        fields = ["name", "category", "status"]

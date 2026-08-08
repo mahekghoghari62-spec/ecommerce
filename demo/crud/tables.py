@@ -1,6 +1,8 @@
 import django_tables2 as tables
 from django.utils.html import format_html
-from .models import CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory, Order, Pricing, Project, Quality, Return
+from django.utils.safestring import mark_safe
+from .models import CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory, Order, Pricing, Project, Product, Quality, Return
+
 _PROJECT_STATUS_CLASS = {
     "planning": "info", "active": "success", "on_hold": "warning", "completed": "secondary",
 }
@@ -25,7 +27,6 @@ _CATALOG_STATUS_CLASS = {
     "pending": "warning", "processing": "info",
     "completed": "success", "failed": "danger",
 }
-
 _IMAGE_BULK_STATUS_CLASS = {
     "pending": "warning", "processing": "info",
     "completed": "success", "failed": "danger",
@@ -35,9 +36,8 @@ _QUALITY_STATUS_CLASS = {
     "failed": "danger", "rework": "info",
 }
 _STATUS_CLASS = {"active": "success", "pending": "warning", "disabled": "secondary"}
-_PROJECT_STATUS_CLASS = {
-    "planning": "info", "active": "success", "on_hold": "warning", "completed": "secondary",
-}
+
+
 class OrderTable(tables.Table):
     actions = tables.TemplateColumn(
         template_name="crud/_order_actions_column.html",
@@ -48,7 +48,7 @@ class OrderTable(tables.Table):
 
     class Meta:
         model = Order
-        fields = ("order_number", "customer_name", "product_name", "quantity", "amount", "status", "order_date")
+        fields = ("order_number", "customer_name", "product", "quantity", "amount", "status", "order_date")
         attrs = {"class": "table table-striped table-hover align-middle mb-0"}
         order_by = "-order_date"
 
@@ -127,7 +127,7 @@ class ReturnTable(tables.Table):
 
 
 class PricingTable(tables.Table):
-    product_name = tables.Column(linkify=True)
+    product = tables.Column(linkify=True)
     final_price = tables.Column(verbose_name="Final Price", orderable=False, empty_values=())
     margin_percent = tables.Column(verbose_name="Margin %", orderable=False, empty_values=())
     actions = tables.TemplateColumn(
@@ -139,7 +139,7 @@ class PricingTable(tables.Table):
 
     class Meta:
         model = Pricing
-        fields = ("product_name", "sku", "cost_price", "selling_price", "discount_percent", "status", "effective_date")
+        fields = ("product", "cost_price", "selling_price", "discount_percent", "status", "effective_date")
         attrs = {"class": "table table-striped table-hover align-middle mb-0"}
         order_by = "-effective_date"
 
@@ -190,7 +190,7 @@ class ClaimTable(tables.Table):
 
 
 class InventoryTable(tables.Table):
-    product_name = tables.Column(linkify=True)
+    product = tables.Column(linkify=True)
     actions = tables.TemplateColumn(
         template_name="crud/_inventory_actions_column.html",
         orderable=False,
@@ -200,9 +200,9 @@ class InventoryTable(tables.Table):
 
     class Meta:
         model = Inventory
-        fields = ("product_name", "sku", "quantity", "reorder_level", "warehouse_location", "status", "last_restocked")
+        fields = ("product", "quantity", "reorder_level", "warehouse_location", "status", "last_restocked")
         attrs = {"class": "table table-striped table-hover align-middle mb-0"}
-        order_by = "product_name"
+        order_by = "product__name"
 
     def render_status(self, record):
         cls = _INVENTORY_STATUS_CLASS.get(record.status, "secondary")
@@ -241,6 +241,8 @@ class CatalogUploadTable(tables.Table):
         if value > 0:
             return format_html('<span class="text-danger fw-bold">{}</span>', value)
         return value
+
+
 class ImageBulkUploadTable(tables.Table):
     name = tables.Column(linkify=True)
     success_rate = tables.Column(verbose_name="Success %", orderable=False, empty_values=())
@@ -268,8 +270,10 @@ class ImageBulkUploadTable(tables.Table):
         if value > 0:
             return format_html('<span class="text-danger fw-bold">{}</span>', value)
         return value
+
+
 class QualityTable(tables.Table):
-    product_name = tables.Column(linkify=True)
+    product = tables.Column(linkify=True)
     actions = tables.TemplateColumn(
         template_name="crud/_quality_actions_column.html",
         orderable=False,
@@ -279,7 +283,7 @@ class QualityTable(tables.Table):
 
     class Meta:
         model = Quality
-        fields = ("product_name", "batch_number", "inspector_name", "status", "defect_count", "inspection_date")
+        fields = ("product", "batch_number", "inspector_name", "status", "defect_count", "inspection_date")
         attrs = {"class": "table table-striped table-hover align-middle mb-0"}
         order_by = "-inspection_date"
 
@@ -291,3 +295,35 @@ class QualityTable(tables.Table):
         if record.defect_count > 0:
             return format_html('<span class="text-danger fw-bold">{}</span>', record.defect_count)
         return record.defect_count
+
+
+class ProductTable(tables.Table):
+    name = tables.Column(linkify=True)
+    image = tables.Column(orderable=False, empty_values=())
+    actions = tables.TemplateColumn(
+        template_name="crud/_product_actions_column.html",
+        orderable=False,
+        verbose_name="",
+        attrs={"td": {"class": "text-end"}},
+    )
+
+    class Meta:
+        model = Product
+        fields = ("name", "category", "price", "status")
+        attrs = {"class": "table table-striped table-hover align-middle mb-0"}
+        order_by = "name"
+
+    def render_status(self, record):
+        cls = {"active": "success", "draft": "warning", "inactive": "secondary"}.get(record.status, "secondary")
+        return format_html('<span class="badge text-bg-{}">{}</span>', cls, record.get_status_display())
+
+    def render_category(self, record):
+        return record.get_category_display()
+
+    def render_price(self, value):
+        return format_html("${}", f"{value:,.2f}")
+
+    def render_image(self, record):
+        if record.image:
+            return format_html('<img src="{}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">', record.image.url)
+        return mark_safe('<span class="text-muted">—</span>')

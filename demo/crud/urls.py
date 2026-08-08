@@ -53,4 +53,9 @@ urlpatterns = [
     path("quality/new/", views.QualityCreateView.as_view(), name="quality_create"),
     path("quality/<int:pk>/edit/", views.QualityUpdateView.as_view(), name="quality_update"),
     path("quality/<int:pk>/delete/", views.QualityDeleteView.as_view(), name="quality_delete"),
+    # Products (full CRUD)
+    path("products/", views.ProductListView.as_view(), name="product_list"),
+    path("products/new/", views.ProductCreateView.as_view(), name="product_create"),
+    path("products/<int:pk>/edit/", views.ProductUpdateView.as_view(), name="product_update"),
+    path("products/<int:pk>/delete/", views.ProductDeleteView.as_view(), name="product_delete"),
 ]

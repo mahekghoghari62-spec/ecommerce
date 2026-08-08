@@ -1,10 +1,10 @@
 {% extends "adminlte/page.html" %}
 {% load i18n django_tables2 static %}
 
-{% block page_title %}Image Bulk Uploads{% endblock %}
+{% block page_title %}Products{% endblock %}
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="/">Home</a></li>
-  <li class="breadcrumb-item active" aria-current="page">Image Bulk Uploads</li>
+  <li class="breadcrumb-item active" aria-current="page">Products</li>
 {% endblock %}
 
 {% block content %}
@@ -13,11 +13,13 @@
 <div class="crud-filters">
   <form method="get">
     {{ filter.form.name }}
+    {{ filter.form.sku }}
+    {{ filter.form.category }}
     {{ filter.form.status }}
     <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>{% trans 'Filter' %}</button>
-    {% if request.GET %}<a href="{% url 'crud:imagebulkupload_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
+    {% if request.GET %}<a href="{% url 'crud:product_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
   </form>
-  <a href="{% url 'crud:imagebulkupload_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:imagebulkupload_create' %}" data-modal-title="{% trans 'New image bulk upload' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New image bulk upload' %}</a>
+  <a href="{% url 'crud:product_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:product_create' %}" data-modal-title="{% trans 'New product' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New product' %}</a>
 </div>
 
 <div class="crud-card">

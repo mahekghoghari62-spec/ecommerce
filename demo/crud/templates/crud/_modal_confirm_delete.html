@@ -1,0 +1,6 @@
+{% load i18n %}
+<p>{% blocktranslate with name=object %}Are you sure you want to delete <strong>{{ name }}</strong>? This cannot be undone.{% endblocktranslate %}</p>
+<div class="text-end">
+  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+  <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>{% trans 'Delete' %}</button>
+</div>

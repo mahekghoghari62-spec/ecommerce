@@ -5,12 +5,12 @@ from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin
+from .mixins import AjaxModalDeleteMixin, AjaxModalFormMixin
 
-from .filters import CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InventoryFilter, OrderFilter, PricingFilter, ProjectFilter, QualityFilter, ReturnFilter
-from .forms import CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InventoryForm, OrderForm, PricingForm, QualityForm, ReturnForm
-from .models import CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory, Order, Pricing, Project, Quality, Return
-from .tables import CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InventoryTable, OrderTable, PricingTable, ProjectTable, QualityTable, ReturnTable
-
+from .filters import CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InventoryFilter, OrderFilter, PricingFilter, ProductFilter, ProjectFilter, QualityFilter, ReturnFilter
+from .forms import CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InventoryForm, OrderForm, PricingForm, ProductForm, QualityForm, ReturnForm
+from .models import CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory, Order, Pricing, Product, Project, Quality, Return
+from .tables import CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InventoryTable, OrderTable, PricingTable, ProductTable, ProjectTable, QualityTable, ReturnTable
 
 # --- Orders: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class OrderListView(LoginRequiredMixin, SingleTableMixin, FilterView):
@@ -21,7 +21,7 @@ class OrderListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_pagination = {"per_page": 10}
 
 
-class OrderCreateView(LoginRequiredMixin, CreateView):
+class OrderCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Order
     form_class = OrderForm
     template_name = "crud/order_form.html"
@@ -32,7 +32,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class OrderUpdateView(LoginRequiredMixin, UpdateView):
+class OrderUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Order
     form_class = OrderForm
     template_name = "crud/order_form.html"
@@ -43,7 +43,7 @@ class OrderUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class OrderDeleteView(LoginRequiredMixin, DeleteView):
+class OrderDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Order
     template_name = "crud/order_confirm_delete.html"
     success_url = reverse_lazy("crud:order_list")
@@ -65,7 +65,7 @@ class ContactListView(LoginRequiredMixin, SingleTableMixin, FilterView):
         return super().get_queryset().select_related("company")
 
 
-class ContactCreateView(LoginRequiredMixin, CreateView):
+class ContactCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Contact
     form_class = ContactForm
     template_name = "crud/contact_form.html"
@@ -76,7 +76,7 @@ class ContactCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ContactUpdateView(LoginRequiredMixin, UpdateView):
+class ContactUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Contact
     form_class = ContactForm
     template_name = "crud/contact_form.html"
@@ -87,7 +87,7 @@ class ContactUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ContactDeleteView(LoginRequiredMixin, DeleteView):
+class ContactDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Contact
     template_name = "crud/contact_confirm_delete.html"
     success_url = reverse_lazy("crud:contact_list")
@@ -137,7 +137,7 @@ class ReturnListView(LoginRequiredMixin, SingleTableMixin, FilterView):
         return super().get_queryset().select_related("order")
 
 
-class ReturnCreateView(LoginRequiredMixin, CreateView):
+class ReturnCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Return
     form_class = ReturnForm
     template_name = "crud/return_form.html"
@@ -148,7 +148,7 @@ class ReturnCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ReturnUpdateView(LoginRequiredMixin, UpdateView):
+class ReturnUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Return
     form_class = ReturnForm
     template_name = "crud/return_form.html"
@@ -159,7 +159,7 @@ class ReturnUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ReturnDeleteView(LoginRequiredMixin, DeleteView):
+class ReturnDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Return
     template_name = "crud/return_confirm_delete.html"
     success_url = reverse_lazy("crud:return_list")
@@ -177,36 +177,39 @@ class PricingListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     template_name = "crud/pricing_list.html"
     table_pagination = {"per_page": 10}
 
+    def get_queryset(self):
+        return super().get_queryset().select_related("product")
 
-class PricingCreateView(LoginRequiredMixin, CreateView):
+
+class PricingCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Pricing
     form_class = PricingForm
     template_name = "crud/pricing_form.html"
     success_url = reverse_lazy("crud:pricing_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Pricing created for “{form.instance.product_name}”.")
+        messages.success(self.request, f"Pricing created for “{form.instance.product.name}”.")
         return super().form_valid(form)
 
 
-class PricingUpdateView(LoginRequiredMixin, UpdateView):
+class PricingUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Pricing
     form_class = PricingForm
     template_name = "crud/pricing_form.html"
     success_url = reverse_lazy("crud:pricing_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Pricing for “{form.instance.product_name}” updated.")
+        messages.success(self.request, f"Pricing for “{form.instance.product.name}” updated.")
         return super().form_valid(form)
 
 
-class PricingDeleteView(LoginRequiredMixin, DeleteView):
+class PricingDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Pricing
     template_name = "crud/pricing_confirm_delete.html"
     success_url = reverse_lazy("crud:pricing_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Pricing for “{self.object.product_name}” deleted.")
+        messages.success(self.request, f"Pricing for “{self.object.product.name}” deleted.")
         return super().form_valid(form)
 
 
@@ -222,7 +225,7 @@ class ClaimListView(LoginRequiredMixin, SingleTableMixin, FilterView):
         return super().get_queryset().select_related("order")
 
 
-class ClaimCreateView(LoginRequiredMixin, CreateView):
+class ClaimCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Claim
     form_class = ClaimForm
     template_name = "crud/claim_form.html"
@@ -233,7 +236,7 @@ class ClaimCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ClaimUpdateView(LoginRequiredMixin, UpdateView):
+class ClaimUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Claim
     form_class = ClaimForm
     template_name = "crud/claim_form.html"
@@ -244,7 +247,7 @@ class ClaimUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ClaimDeleteView(LoginRequiredMixin, DeleteView):
+class ClaimDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Claim
     template_name = "crud/claim_confirm_delete.html"
     success_url = reverse_lazy("crud:claim_list")
@@ -262,36 +265,39 @@ class InventoryListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     template_name = "crud/inventory_list.html"
     table_pagination = {"per_page": 10}
 
+    def get_queryset(self):
+        return super().get_queryset().select_related("product")
 
-class InventoryCreateView(LoginRequiredMixin, CreateView):
+
+class InventoryCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Inventory
     form_class = InventoryForm
     template_name = "crud/inventory_form.html"
     success_url = reverse_lazy("crud:inventory_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Inventory created for “{form.instance.product_name}”.")
+        messages.success(self.request, f"Inventory created for “{form.instance.product.name}”.")
         return super().form_valid(form)
 
 
-class InventoryUpdateView(LoginRequiredMixin, UpdateView):
+class InventoryUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Inventory
     form_class = InventoryForm
     template_name = "crud/inventory_form.html"
     success_url = reverse_lazy("crud:inventory_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Inventory for “{form.instance.product_name}” updated.")
+        messages.success(self.request, f"Inventory for “{form.instance.product.name}” updated.")
         return super().form_valid(form)
 
 
-class InventoryDeleteView(LoginRequiredMixin, DeleteView):
+class InventoryDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Inventory
     template_name = "crud/inventory_confirm_delete.html"
     success_url = reverse_lazy("crud:inventory_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Inventory for “{self.object.product_name}” deleted.")
+        messages.success(self.request, f"Inventory for “{self.object.product.name}” deleted.")
         return super().form_valid(form)
 
 
@@ -304,7 +310,7 @@ class CatalogUploadListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_pagination = {"per_page": 10}
 
 
-class CatalogUploadCreateView(LoginRequiredMixin, CreateView):
+class CatalogUploadCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = CatalogUpload
     form_class = CatalogUploadForm
     template_name = "crud/catalogupload_form.html"
@@ -315,7 +321,7 @@ class CatalogUploadCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class CatalogUploadUpdateView(LoginRequiredMixin, UpdateView):
+class CatalogUploadUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = CatalogUpload
     form_class = CatalogUploadForm
     template_name = "crud/catalogupload_form.html"
@@ -326,7 +332,7 @@ class CatalogUploadUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class CatalogUploadDeleteView(LoginRequiredMixin, DeleteView):
+class CatalogUploadDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = CatalogUpload
     template_name = "crud/catalogupload_confirm_delete.html"
     success_url = reverse_lazy("crud:catalogupload_list")
@@ -345,7 +351,7 @@ class ImageBulkUploadListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_pagination = {"per_page": 10}
 
 
-class ImageBulkUploadCreateView(LoginRequiredMixin, CreateView):
+class ImageBulkUploadCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = ImageBulkUpload
     form_class = ImageBulkUploadForm
     template_name = "crud/imagebulkupload_form.html"
@@ -356,7 +362,7 @@ class ImageBulkUploadCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ImageBulkUploadUpdateView(LoginRequiredMixin, UpdateView):
+class ImageBulkUploadUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = ImageBulkUpload
     form_class = ImageBulkUploadForm
     template_name = "crud/imagebulkupload_form.html"
@@ -367,7 +373,7 @@ class ImageBulkUploadUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ImageBulkUploadDeleteView(LoginRequiredMixin, DeleteView):
+class ImageBulkUploadDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = ImageBulkUpload
     template_name = "crud/imagebulkupload_confirm_delete.html"
     success_url = reverse_lazy("crud:imagebulkupload_list")
@@ -385,34 +391,78 @@ class QualityListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     template_name = "crud/quality_list.html"
     table_pagination = {"per_page": 10}
 
+    def get_queryset(self):
+        return super().get_queryset().select_related("product")
 
-class QualityCreateView(LoginRequiredMixin, CreateView):
+
+class QualityCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Quality
     form_class = QualityForm
     template_name = "crud/quality_form.html"
     success_url = reverse_lazy("crud:quality_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Quality check for “{form.instance.product_name}” created.")
+        messages.success(self.request, f"Quality check for “{form.instance.product.name}” created.")
         return super().form_valid(form)
 
 
-class QualityUpdateView(LoginRequiredMixin, UpdateView):
+class QualityUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
     model = Quality
     form_class = QualityForm
     template_name = "crud/quality_form.html"
     success_url = reverse_lazy("crud:quality_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Quality check for “{form.instance.product_name}” updated.")
+        messages.success(self.request, f"Quality check for “{form.instance.product.name}” updated.")
         return super().form_valid(form)
 
 
-class QualityDeleteView(LoginRequiredMixin, DeleteView):
+class QualityDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Quality
     template_name = "crud/quality_confirm_delete.html"
     success_url = reverse_lazy("crud:quality_list")
 
     def form_valid(self, form):
-        messages.success(self.request, f"Quality check for “{self.object.product_name}” deleted.")
+        messages.success(self.request, f"Quality check for “{self.object.product.name}” deleted.")
+        return super().form_valid(form)
+
+
+# --- Products: full CRUD (tables2 + django-filter + crispy form + messages) ---
+class ProductListView(LoginRequiredMixin, SingleTableMixin, FilterView):
+    model = Product
+    table_class = ProductTable
+    filterset_class = ProductFilter
+    template_name = "crud/product_list.html"
+    table_pagination = {"per_page": 10}
+
+
+class ProductCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "crud/product_form.html"
+    success_url = reverse_lazy("crud:product_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Product “{form.instance.name}” created.")
+        return super().form_valid(form)
+
+
+class ProductUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "crud/product_form.html"
+    success_url = reverse_lazy("crud:product_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Product “{form.instance.name}” updated.")
+        return super().form_valid(form)
+
+
+class ProductDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
+    model = Product
+    template_name = "crud/product_confirm_delete.html"
+    success_url = reverse_lazy("crud:product_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Product “{self.object.name}” deleted.")
         return super().form_valid(form)
