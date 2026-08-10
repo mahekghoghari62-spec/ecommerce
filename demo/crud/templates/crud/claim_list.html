@@ -10,15 +10,87 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
 
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">{% trans 'Overview' %}</h5>
+  <a href="{% url 'crud:support' %}" class="btn btn-primary">
+  <i class="bi bi-plus-circle me-1"></i>{% trans 'Raise Claim' %}
+</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <h4 class="fw-bold mb-3">{% trans 'Raising claims is easy' %}</h4>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>{% trans 'Cut down on losses due to wrong returns' %}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>{% trans 'Transparent resolution process' %}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>{% trans 'Fast claim tracking & status updates' %}</span>
+        </div>
+        <a href="{% url 'crud:support' %}" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-1"></i>{% trans 'Raise Claim' %}
+        </a>
+      </div>
+      <div class="col-lg-5">
+        <div class="bg-light rounded p-4 text-center">
+          <i class="bi bi-shield-check text-primary" style="font-size: 3rem;"></i>
+          <p class="text-muted mt-2 mb-0">{% trans 'Track every claim from filing to settlement.' %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card card-outline card-secondary">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ total_claims }}</h3>
+        <span class="text-muted">{% trans 'Total' %}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-outline card-warning">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ open_count }}</h3>
+        <span class="text-muted">{% trans 'Open' %}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-outline card-primary">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ approved_count }}</h3>
+        <span class="text-muted">{% trans 'Approved' %}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-outline card-success">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ settled_count }}</h3>
+        <span class="text-muted">{% trans 'Settled' %}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="crud-filters">
-  <form method="get">
+  <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
     {{ filter.form.order__order_number }}
     {{ filter.form.claim_type }}
     {{ filter.form.status }}
     <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>{% trans 'Filter' %}</button>
     {% if request.GET %}<a href="{% url 'crud:claim_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
   </form>
-  <a href="{% url 'crud:claim_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:claim_create' %}" data-modal-title="{% trans 'New claim' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New claim' %}</a>
 </div>
 
 <div class="crud-card">

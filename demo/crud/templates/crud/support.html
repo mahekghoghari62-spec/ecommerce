@@ -1,0 +1,105 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}Support{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Support</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<ul class="nav nav-tabs mb-3" id="supportTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'help' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#help-pane" type="button">{% trans 'Help' %}</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'tickets' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tickets-pane" type="button">{% trans 'My Tickets' %}</button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ================= HELP ================= -->
+  <div class="tab-pane fade {% if active_tab == 'help' %}show active{% endif %}" id="help-pane" role="tabpanel">
+    <nav class="mb-3">
+      <span class="text-muted">{% trans 'Help' %}</span> <i class="bi bi-chevron-right small text-muted"></i>
+      <span>{% trans 'Returns/RTO & Exchange' %}</span>
+    </nav>
+
+    <div class="row g-4">
+      <div class="col-lg-9">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-arrow-counterclockwise text-primary"></i>
+          <h5 class="mb-0">{% trans 'Returns/RTO & Exchange' %}</h5>
+        </div>
+        <div class="list-group">
+          {% for topic in return_help_topics %}
+          <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            {{ topic }}
+            <i class="bi bi-chevron-right text-muted"></i>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col-lg-3">
+        <h6 class="text-muted mb-3">{% trans 'Find More Help' %}</h6>
+        <div class="d-flex flex-column gap-2">
+          {% for category in help_categories %}
+          <a href="#" class="text-decoration-none">{{ category }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MY TICKETS ================= -->
+  <div class="tab-pane fade {% if active_tab == 'tickets' %}show active{% endif %}" id="tickets-pane" role="tabpanel">
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{% url 'crud:claim_list' %}" class="text-decoration-none"><i class="bi bi-shield-check me-1"></i>{% trans 'View Claims' %}</a>
+    </div>
+
+    <ul class="nav nav-pills mb-3 flex-wrap gap-1">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tk-all" type="button">{% trans 'All' %} ({{ all_count }})</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tk-attention" type="button">{% trans 'Needs Attention' %} ({{ needs_attention_count }})</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tk-progress" type="button">{% trans 'In Progress' %} ({{ in_progress_count }})</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tk-closed" type="button">{% trans 'Closed' %} ({{ closed_count }})</button></li>
+    </ul>
+
+    {% if all_count %}
+    <div class="crud-card">
+      <table class="table table-striped table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>{% trans 'Created On' %}</th>
+            <th>{% trans 'Ticket ID' %}</th>
+            <th>{% trans 'Issue' %}</th>
+            <th>{% trans 'Status' %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ticket in tickets %}
+          <tr>
+            <td>{{ ticket.created|date:"d M'y | h:i A" }}</td>
+            <td><a href="#">{{ ticket.ticket_id }}</a></td>
+            <td>{{ ticket.issue }}</td>
+            <td><span class="badge text-bg-{{ ticket.status_color }}">{{ ticket.get_status_display }}</span></td>
+            <td class="text-end"><button class="btn btn-sm btn-outline-secondary">{% trans 'View' %}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-ticket-perforated" style="font-size: 3rem; opacity: .3;"></i>
+        <p class="mt-3 mb-0">{% trans 'No tickets raised yet.' %}</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

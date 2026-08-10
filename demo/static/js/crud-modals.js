@@ -10,9 +10,17 @@ document.addEventListener('DOMContentLoaded', function () {
     modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
     modal.show();
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          return r.text().then(text => { throw new Error('Status ' + r.status + ': ' + text); });
+        }
+        return r.json();
+      })
       .then(data => { modalBody.innerHTML = data.html; bindForm(url); })
-      .catch(() => { modalBody.innerHTML = '<p class="text-danger">Failed to load.</p>'; });
+      .catch(err => {
+        console.error('Failed to load modal:', err);
+        modalBody.innerHTML = '<p class="text-danger">Failed to load.</p>';
+      });
   }
 
   function bindForm(url) {
@@ -26,7 +34,12 @@ document.addEventListener('DOMContentLoaded', function () {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData,
       })
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) {
+            return r.text().then(text => { throw new Error('Status ' + r.status + ': ' + text); });
+          }
+          return r.json();
+        })
         .then(data => {
           if (data.success) {
             modal.hide();
@@ -35,6 +48,10 @@ document.addEventListener('DOMContentLoaded', function () {
             modalBody.innerHTML = data.html;
             bindForm(url);
           }
+        })
+        .catch(err => {
+          console.error('Form submit failed:', err);
+          alert('Something went wrong — check console for details.');
         });
     });
   }

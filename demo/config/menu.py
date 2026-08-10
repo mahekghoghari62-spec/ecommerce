@@ -15,15 +15,34 @@ def _is_staff(request) -> bool:
 ADMINLTE_MENU = [
     {"text": "Dashboard", "route": "index3", "icon": "bi bi-speedometer"},
     {"header": "MANAGE BUSINESS"},
-    {"text": "Orders", "route": "crud:order_list", "icon": "bi bi-bag-check"},
+    {
+    "text": "Orders",
+    "icon": "bi bi-bag-check",
+    "submenu": [
+        {"text": "Manage Orders", "route": "crud:order_list", "icon": "bi bi-circle"},
+    ],
+    },
     {"text": "Returns", "route": "crud:return_list", "icon": "bi bi-arrow-return-left"},
-    {"text": "Pricing", "route": "crud:pricing_list", "icon": "bi bi-tag"},
+    {
+    "text": "Pricing",
+    "icon": "bi bi-tag",
+    "submenu": [
+        {"text": "Manage Pricing", "route": "crud:pricing_list", "active": ["pricing"]},
+        {"text": "Reduce RTOs & Returns", "route": "crud:reduce_rto_returns"},
+    ],
+},
     {"text": "Claims", "route": "crud:claim_list", "icon": "bi bi-exclamation-triangle"},
     {"text": "Inventory", "route": "crud:inventory_list", "icon": "bi bi-box-seam"},
     {"text": "Catalog Uploads", "route": "crud:catalogupload_list", "icon": "bi bi-cloud-upload"},
     {"text": "Image Bulk Uploads", "route": "crud:imagebulkupload_list", "icon": "bi bi-images"},
     {"text": "Quality", "route": "crud:quality_list", "icon": "bi bi-clipboard-check"},
     {"text": "Products", "route": "crud:product_list", "icon": "bi bi-box"},
+    {"text": "Payments", "route": "crud:payment_list", "icon": "bi bi-credit-card"},
+    {"text": "Warehouse", "route": "crud:warehouse_list", "icon": "bi bi-building"},
+    {"header": "BOOST SALES"},
+    {"text": "Influencer Campaigns", "route": "crud:influencercampaign_list", "icon": "bi bi-person-badge"},
+    {"text": "Advertisement", "route": "crud:advertisement_list", "icon": "bi bi-megaphone"},
+
 ]
 
 # --- Topbar dropdown data (mirrors _topbar.astro) ---

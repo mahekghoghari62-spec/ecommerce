@@ -10,6 +10,7 @@ urlpatterns = [
     path("orders/new/", views.OrderCreateView.as_view(), name="order_create"),
     path("orders/<int:pk>/edit/", views.OrderUpdateView.as_view(), name="order_update"),
     path("orders/<int:pk>/delete/", views.OrderDeleteView.as_view(), name="order_delete"),
+    path("barcode-scan/", views.BarcodeScanView.as_view(), name="barcode_scan"),
     # Contacts (full CRUD)
     path("contacts/", views.ContactListView.as_view(), name="contact_list"),
     path("contacts/new/", views.ContactCreateView.as_view(), name="contact_create"),
@@ -28,16 +29,20 @@ urlpatterns = [
     path("pricing/new/", views.PricingCreateView.as_view(), name="pricing_create"),
     path("pricing/<int:pk>/edit/", views.PricingUpdateView.as_view(), name="pricing_update"),
     path("pricing/<int:pk>/delete/", views.PricingDeleteView.as_view(), name="pricing_delete"),
+    path("pricing/reduce-rto-returns/", views.ReduceRTOReturnsView.as_view(), name="reduce_rto_returns"),
     # Claims (full CRUD)
     path("claims/", views.ClaimListView.as_view(), name="claim_list"),
     path("claims/new/", views.ClaimCreateView.as_view(), name="claim_create"),
     path("claims/<int:pk>/edit/", views.ClaimUpdateView.as_view(), name="claim_update"),
     path("claims/<int:pk>/delete/", views.ClaimDeleteView.as_view(), name="claim_delete"),
+    path("support/", views.SupportView.as_view(), name="support"),
     # Inventory (full CRUD)
     path("inventory/", views.InventoryListView.as_view(), name="inventory_list"),
     path("inventory/new/", views.InventoryCreateView.as_view(), name="inventory_create"),
     path("inventory/<int:pk>/edit/", views.InventoryUpdateView.as_view(), name="inventory_update"),
     path("inventory/<int:pk>/delete/", views.InventoryDeleteView.as_view(), name="inventory_delete"),
+    path("inventory/bulk-stock/", views.InventoryBulkStockUpdateView.as_view(), name="inventory_bulk_stock_modal"),
+path("inventory/bulk-stock/download/", views.InventoryBulkStockDownloadView.as_view(), name="inventory_bulk_stock_download"),
     # Catalog Uploads (full CRUD)
     path("catalog-uploads/", views.CatalogUploadListView.as_view(), name="catalogupload_list"),
     path("catalog-uploads/new/", views.CatalogUploadCreateView.as_view(), name="catalogupload_create"),
@@ -58,4 +63,24 @@ urlpatterns = [
     path("products/new/", views.ProductCreateView.as_view(), name="product_create"),
     path("products/<int:pk>/edit/", views.ProductUpdateView.as_view(), name="product_update"),
     path("products/<int:pk>/delete/", views.ProductDeleteView.as_view(), name="product_delete"),
+    # Payments (full CRUD)
+    path("payments/", views.PaymentListView.as_view(), name="payment_list"),
+    path("payments/new/", views.PaymentCreateView.as_view(), name="payment_create"),
+    path("payments/<int:pk>/edit/", views.PaymentUpdateView.as_view(), name="payment_update"),
+    path("payments/<int:pk>/delete/", views.PaymentDeleteView.as_view(), name="payment_delete"),
+    # Warehouses (full CRUD)
+    path("warehouses/", views.WarehouseListView.as_view(), name="warehouse_list"),
+    path("warehouses/new/", views.WarehouseCreateView.as_view(), name="warehouse_create"),
+    path("warehouses/<int:pk>/edit/", views.WarehouseUpdateView.as_view(), name="warehouse_update"),
+    path("warehouses/<int:pk>/delete/", views.WarehouseDeleteView.as_view(), name="warehouse_delete"),
+    # Influencer Campaigns (full CRUD)
+    path("influencer-campaigns/", views.InfluencerCampaignListView.as_view(), name="influencercampaign_list"),
+    path("influencer-campaigns/new/", views.InfluencerCampaignCreateView.as_view(), name="influencercampaign_create"),
+    path("influencer-campaigns/<int:pk>/edit/", views.InfluencerCampaignUpdateView.as_view(), name="influencercampaign_update"),
+    path("influencer-campaigns/<int:pk>/delete/", views.InfluencerCampaignDeleteView.as_view(), name="influencercampaign_delete"),
+    # Advertisements (full CRUD)
+    path("advertisements/", views.AdvertisementListView.as_view(), name="advertisement_list"),
+    path("advertisements/new/", views.AdvertisementCreateView.as_view(), name="advertisement_create"),
+    path("advertisements/<int:pk>/edit/", views.AdvertisementUpdateView.as_view(), name="advertisement_update"),
+    path("advertisements/<int:pk>/delete/", views.AdvertisementDeleteView.as_view(), name="advertisement_delete"),
 ]

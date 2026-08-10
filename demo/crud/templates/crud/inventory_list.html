@@ -10,18 +10,121 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
 
-<div class="crud-filters">
-  <form method="get">
-    {{ filter.form.product }}
-    {{ filter.form.status }}
-    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>{% trans 'Filter' %}</button>
-    {% if request.GET %}<a href="{% url 'crud:inventory_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
-  </form>
-  <a href="{% url 'crud:inventory_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:inventory_create' %}" data-modal-title="{% trans 'New item' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New item' %}</a>
+<div class="card mb-0" style="background: linear-gradient(90deg, #fff3e0, #fce4ec); border-radius: .375rem .375rem 0 0;">
+  <div class="card-body">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <h5 class="fw-bold mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>{% trans 'Keep Your Stock Healthy' %}</h5>
+        <div class="d-flex flex-wrap gap-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-check-square-fill text-success"></i>
+            <span>{% trans 'Avoid stockouts with timely restocking' %}</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-check-square-fill text-success"></i>
+            <span>{% trans 'Track low-stock items before they run out' %}</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{% url 'crud:inventory_create' %}" class="btn btn-primary" data-modal-url="{% url 'crud:inventory_create' %}" data-modal-title="{% trans 'New item' %}">{% trans 'Restock Now' %}</a>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="crud-card">
-  {% render_table table %}
+<div class="crud-card" style="border-radius: 0 0 .375rem .375rem; border-top: 0;">
+  <div class="d-flex flex-wrap justify-content-between align-items-center p-3 border-bottom gap-3">
+    <h5 class="mb-0">{% trans 'Inventory' %}</h5>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <a href="#" class="text-decoration-none text-danger"><i class="bi bi-youtube me-1"></i>{% trans 'How it Works?' %}</a>
+      <div class="input-group" style="width: 280px;">
+        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+        {{ filter.form.product }}
+      </div>
+      <a href="{% url 'crud:catalogupload_create' %}" class="btn btn-primary" data-modal-url="{% url 'crud:catalogupload_create' %}" data-modal-title="{% trans 'New catalog upload' %}">
+        <i class="bi bi-upload me-1"></i>{% trans 'Catalog Upload' %}
+      </a>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs px-3 pt-2" id="catalogTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" type="button">{% trans 'Active' %} ({{ active_products_count }})</button></li>
+    <li class="nav-item"><button class="nav-link" type="button">{% trans 'Draft' %} ({{ draft_products_count }})</button></li>
+    <li class="nav-item"><button class="nav-link" type="button">{% trans 'Inactive' %} ({{ inactive_products_count }})</button></li>
+  </ul>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center px-3 pt-3">
+    <ul class="nav nav-pills flex-wrap gap-1" id="stockTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" type="button">{% trans 'All Stock' %} ({{ total_items }})</button></li>
+      <li class="nav-item"><button class="nav-link" type="button">{% trans 'Out of Stock' %} ({{ out_of_stock_count }})</button></li>
+      <li class="nav-item"><button class="nav-link" type="button">{% trans 'Low Stock' %} ({{ low_stock_count }})</button></li>
+    </ul>
+    <a href="#" class="text-decoration-none" data-modal-url="{% url 'crud:inventory_bulk_stock_modal' %}" data-modal-title="{% trans 'Bulk Stock Update' %}">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>{% trans 'Bulk Stock Update' %}
+    </a>
+  </div>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-3">
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small">{% trans 'Filter by' %}:</span>
+      {{ filter.form.status }}
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small">{% trans 'Sort by' %}:</span>
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortByBtn" data-bs-toggle="dropdown" aria-expanded="false">
+          {% if current_sort == 'quantity' %}{% trans 'Lowest Quantity' %}
+          {% elif current_sort == '-updated' %}{% trans 'Recently Updated' %}
+          {% else %}{% trans 'Highest Quantity' %}{% endif %}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 230px;" aria-labelledby="sortByBtn">
+          <li class="small text-muted mb-2">{% trans 'Sort by' %}</li>
+          <li>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="sort" id="sortHighQty" value="-quantity"
+                {% if current_sort == '-quantity' %}checked{% endif %}
+                onchange="applySortInventory(this.value)">
+              <label class="form-check-label" for="sortHighQty">{% trans 'Highest Quantity' %}</label>
+            </div>
+          </li>
+          <li>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="sort" id="sortLowQty" value="quantity"
+                {% if current_sort == 'quantity' %}checked{% endif %}
+                onchange="applySortInventory(this.value)">
+              <label class="form-check-label" for="sortLowQty">{% trans 'Lowest Quantity' %}</label>
+            </div>
+          </li>
+          <li>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="sort" id="sortNewest" value="-updated"
+                {% if current_sort == '-updated' %}checked{% endif %}
+                onchange="applySortInventory(this.value)">
+              <label class="form-check-label" for="sortNewest">{% trans 'Recently Updated' %}</label>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  {% if total_items %}
+    <div class="crud-card">
+      {% render_table table %}
+    </div>
+  {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-box-seam" style="font-size: 3rem; opacity: .3;"></i>
+      <p class="mt-3 mb-0">{% trans 'No inventory items yet.' %}</p>
+    </div>
+  {% endif %}
+</div>
+
+<div class="d-flex justify-content-end mt-2">
+  <a href="{% url 'crud:inventory_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:inventory_create' %}" data-modal-title="{% trans 'New item' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New item' %}</a>
 </div>
 
 <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
@@ -36,4 +139,11 @@
   </div>
 </div>
 <script src="{% static 'js/crud-modals.js' %}"></script>
+<script>
+function applySortInventory(value) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('sort', value);
+  window.location.href = url.toString();
+}
+</script>
 {% endblock %}

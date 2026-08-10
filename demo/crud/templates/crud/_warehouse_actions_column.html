@@ -1,0 +1,5 @@
+{% load i18n %}
+<div class="crud-actions">
+  <a href="{% url 'crud:warehouse_update' record.pk %}" class="btn btn-edit" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}" data-modal-url="{% url 'crud:warehouse_update' record.pk %}" data-modal-title="{% trans 'Edit warehouse' %}"><i class="bi bi-pencil"></i></a>
+  <a href="{% url 'crud:warehouse_delete' record.pk %}" class="btn btn-delete" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}" data-modal-url="{% url 'crud:warehouse_delete' record.pk %}" data-modal-title="{% trans 'Delete warehouse' %}"><i class="bi bi-trash"></i></a>
+</div>

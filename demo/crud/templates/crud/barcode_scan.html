@@ -1,0 +1,67 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Barcoded Packet Scan' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:order_list' %}">{% trans 'Orders' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Scan Barcoded Packets' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a href="{% url 'crud:order_list' %}" class="text-decoration-none text-dark"><i class="bi bi-arrow-left me-2"></i></a>
+  <a href="#" class="btn btn-outline-primary">{% trans 'Buy Barcoded Packets' %}</a>
+</div>
+
+<div class="crud-card mb-3">
+  <div class="row">
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-file-earmark-text" style="font-size:1.8rem; color:#7c3aed;"></i>
+      <div>
+        <h6 class="fw-bold">{% trans 'Why use Barcoded Packets?' %}</h6>
+        <p class="mb-2 small"><i class="bi bi-shield-check text-primary me-2"></i>{% trans 'Barcoded packets are tamperproof and protects the shipments from fraud' %}</p>
+        <p class="small"><i class="bi bi-cash-coin text-primary me-2"></i>{% trans 'Enjoy up to 100% approval on RTO Claims for shipments scanned and shipped in Barcoded packets' %}</p>
+      </div>
+    </div>
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-upc-scan" style="font-size:1.8rem; color:#0b7285;"></i>
+      <div>
+        <h6 class="fw-bold">{% trans 'How to Scan Barcoded Packets?' %}</h6>
+        <p class="mb-2 small"><i class="bi bi-upc text-primary me-2"></i>{% trans 'Scan the AWB barcode and packet QR using any scanning device on the laptop/computer' %}</p>
+        <p class="small"><i class="bi bi-link-45deg text-primary me-2"></i>{% trans 'Complete the mandatory linking of AWB & Barcoded packet QR by submitting the scan' %}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card">
+  <div class="row">
+    <div class="col-md-6">
+      <h6 class="fw-bold mb-2">{% trans 'Step 1' %}</h6>
+      <label class="form-label small text-muted">{% trans 'AWB Number' %}</label>
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" placeholder="{% trans 'Scan/Type AWB Number' %}">
+        <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+      </div>
+      <div class="small text-muted">
+        {% trans "Don't have scanning device? try" %} <a href="#">{% trans 'Scan with Mobile' %}</a>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <h6 class="fw-bold mb-2">{% trans 'Step 2' %}</h6>
+      <div class="d-flex gap-2">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="{% trans 'Packet ID' %}">
+          <span class="input-group-text"><i class="bi bi-qr-code"></i></span>
+        </div>
+        <button class="btn btn-secondary" disabled>{% trans 'Submit' %}</button>
+      </div>
+    </div>
+  </div>
+  <div class="text-end small text-muted mt-3">
+    {% trans 'To change the damaged packet, use' %} <a href="#">{% trans 'Re-link Packet' %}</a>
+  </div>
+</div>
+{% endblock %}

@@ -153,3 +153,101 @@ body { background: var(--crud-bg); }
   background: var(--crud-primary);
   border-color: var(--crud-primary);
 }
+/* --- Promo banner --- */
+.crud-banner {
+  display: flex;
+  align-items: center;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+.crud-banner a { color: #1e40af; font-weight: 600; }
+
+/* --- Status tabs --- */
+.crud-status-tabs {
+  border-bottom: 1px solid var(--crud-border);
+}
+.crud-status-tabs .nav-link {
+  color: var(--crud-text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  padding: 10px 16px;
+}
+.crud-status-tabs .nav-link .badge {
+  margin-left: 6px;
+  color: var(--crud-text-muted);
+}
+.crud-status-tabs .nav-link.active {
+  color: var(--crud-primary);
+  border-bottom-color: var(--crud-primary);
+  background: transparent;
+}
+/* --- Info banner variants --- */
+.crud-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+}
+
+.crud-notice-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+.crud-notice-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--crud-text) !important;
+}
+
+.crud-notice-body {
+  font-size: 0.88rem;
+  color: var(--crud-text-muted) !important;
+  line-height: 1.5;
+}
+.crud-notice-blue {
+  background: #eaf7fb;
+  border: 1px solid #bfe6f0;
+}
+.crud-notice-blue .crud-notice-title { color: #0b7285; }
+
+.crud-notice-white {
+  background: var(--crud-surface);
+  border: 1px solid var(--crud-border);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crud-notice-yellow {
+  background: #fff9e6;
+  border: 1px solid #ffe8a3;
+  align-items: center;
+  justify-content: space-between;
+}
+.crud-notice-yellow .crud-notice-title { color: #b8860b; }
+
+.crud-notice-gray {
+  background: #f1f3f9;
+  border: 1px solid var(--crud-border);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crud-notice-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.crud-notice-actions .btn-outline-primary {
+  border-color: var(--crud-primary);
+  color: var(--crud-primary);
+  border-radius: 8px;
+  font-weight: 600;
+}

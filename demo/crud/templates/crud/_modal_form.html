@@ -1,2 +1,5 @@
 {% load crispy_forms_tags %}
-{% crispy form %}
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% crispy form %}
+</form>

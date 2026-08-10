@@ -10,8 +10,64 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
 
+<div class="crud-notice crud-notice-blue">
+  <i class="bi bi-box-seam crud-notice-icon" style="color:#0b7285;"></i>
+  <div>
+    <div class="crud-notice-title" style="color:#1f2430;">{% trans 'Some orders may be put' %} <span style="color:#d97706;">'{% trans 'On-Hold' %}'</span> {% trans 'due to high stress levels among our courier partners' %}</div>
+    <div class="crud-notice-body" style="color:#6b7280;">
+      {% trans 'These orders will be' %} <strong>{% trans 'processed to Pending tab soon' %}</strong><br>
+      {% trans "Don't worry! There will be" %} <strong>{% trans 'no order loss' %}</strong>, {% trans 'and no penalties will be charged' %}
+    </div>
+  </div>
+</div>
+
+<div class="crud-notice crud-notice-white">
+  <div class="d-flex align-items-center gap-3">
+    <i class="bi bi-file-earmark-text crud-notice-icon" style="color:#7c3aed;"></i>
+    <div class="crud-notice-title" style="font-weight:600; color:#1f2430;">{% trans 'As per platform packaging policy, all sellers must use Transparent Barcoded Packaging for their products.' %}</div>
+  </div>
+  <div class="crud-notice-actions">
+    <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">{% trans 'Buy Barcoded Packets' %}</a>
+    <a href="{% url 'crud:barcode_scan' %}" class="btn btn-outline-primary">{% trans 'Scan Barcoded Packets' %}</a>
+  </div>
+</div>
+
+<div class="crud-notice crud-notice-yellow">
+  <div>
+    <span class="crud-notice-title" style="color:#b8860b;">{% trans 'Upcoming Policy Update:' %}</span>
+    <strong style="color:#1f2430;">{% trans 'Next Day Dispatch' %}</strong> <span style="color:#1f2430;">{% trans 'is becoming the new platform standard for all orders.' %}</span>
+  </div>
+  <a href="#" style="color:#b8860b; font-weight:600; white-space:nowrap;">{% trans 'Know more' %}</a>
+</div>
+
+<div class="crud-notice crud-notice-gray">
+  <div class="d-flex align-items-center gap-3">
+    <i class="bi bi-graph-up-arrow crud-notice-icon" style="color:#16a34a;"></i>
+    <div>
+      <div class="crud-notice-title" style="color:#1f2430;">{% trans 'Get better visibility into your dispatch health' %}</div>
+      <div class="crud-notice-body" style="color:#6b7280;">{% trans 'Track dispatch health, catalog status and key order performance insights in one place.' %}</div>
+    </div>
+  </div>
+  <a href="#" class="btn btn-primary">{% trans 'Check Dispatch health' %}</a>
+</div>
+
+<ul class="nav nav-tabs crud-status-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if not active_status %}active{% endif %}" href="{% url 'crud:order_list' %}">
+      {% trans 'All' %} <span class="badge text-bg-light">{{ total_count }}</span>
+    </a>
+  </li>
+  {% for tab in status_tabs %}
+    <li class="nav-item">
+      <a class="nav-link {% if active_status == tab.key %}active{% endif %}" href="?status={{ tab.key }}">
+        {{ tab.label }} <span class="badge text-bg-light">{{ tab.count }}</span>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+
 <div class="crud-filters">
-  <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+  <form method="get">
     {{ filter.form.order_number }}
     {{ filter.form.customer_name }}
     {{ filter.form.status }}
@@ -25,6 +81,94 @@
   {% render_table table %}
 </div>
 
+<!-- Barcode info modal -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans 'Buy Barcoded Packets' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-4">
+          <div class="col-md-7">
+            <h6 class="fw-bold">{% trans 'Why use Barcoded Packets?' %}</h6>
+            <p class="mb-2"><i class="bi bi-shield-check text-primary me-2"></i>{% trans 'Barcoded packets are tamperproof and protect the shipments from fraud.' %}</p>
+            <p><i class="bi bi-upc-scan text-primary me-2"></i>{% trans "It's mandatory to scan the AWB & the QR code before dispatching the shipment to be eligible to raise RTO claims." %}</p>
+          </div>
+          <div class="col-md-5 text-center">
+            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;">
+              <i class="bi bi-play-circle" style="font-size:2.5rem; color:#6b7280;"></i>
+            </div>
+            <small class="text-muted">{% trans 'How to purchase — Sell on Meesho' %}</small>
+          </div>
+        </div>
+
+        <p class="text-muted mb-4"><i class="bi bi-laptop me-2"></i>{% trans 'To scan the packets using your Desktop/Laptop, a 2D scanning device that supports scanning of Barcode and QR Code will be needed.' %}</p>
+
+        <h6 class="fw-bold mb-3">{% trans 'Authorised Vendors' %}</h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">Parin Polymers</div>
+              <div class="text-muted small">{% trans 'Location:' %} Chandigarh</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 9</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.02 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">Krishna Polymers</div>
+              <div class="text-muted small">{% trans 'Location:' %} Ajmer</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 9</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.06 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">Pacfo</div>
+              <div class="text-muted small">{% trans 'Location:' %} Surat</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 11</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.07 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">VS Products</div>
+              <div class="text-muted small">{% trans 'Location:' %} Delhi NCR</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 16</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.07 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">PicknPack</div>
+              <div class="text-muted small">{% trans 'Location:' %} New Delhi</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 16</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.10 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3">
+              <div class="fw-bold">Shri Anand Polymers</div>
+              <div class="text-muted small">{% trans 'Location:' %} Gurgaon</div>
+              <div class="text-muted small">{% trans 'Sizes available:' %} 9</div>
+              <div class="text-muted small mb-2">{% trans 'Price:' %} ₹1.21 {% trans 'per packet' %} (6.5x8 inch)</div>
+              <button class="btn btn-sm btn-outline-primary">{% trans 'Buy Now' %}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CRUD form modal -->
 <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">

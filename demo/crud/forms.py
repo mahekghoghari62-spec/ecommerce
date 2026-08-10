@@ -4,7 +4,7 @@ from crispy_forms.layout import HTML, Column, Layout, Row, Submit
 from django import forms
 from django.urls import reverse
 
-from .models import CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory, Order, Quality, Return, Pricing, Product
+from .models import Advertisement,CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory,InfluencerCampaign, Order, Quality, Return, Pricing, Product ,Payment,Warehouse
 
 
 class OrderForm(forms.ModelForm):
@@ -163,7 +163,7 @@ class ClaimForm(forms.ModelForm):
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Inventory
-        fields = ["product", "quantity", "reorder_level", "warehouse_location", "status", "last_restocked"]
+        fields = ["product", "quantity", "reorder_level", "warehouse", "status", "last_restocked"]
         widgets = {
             "last_restocked": forms.DateInput(attrs={"type": "date"}),
         }
@@ -193,11 +193,10 @@ class InventoryForm(forms.ModelForm):
             ),
         )
 
-
 class CatalogUploadForm(forms.ModelForm):
     class Meta:
         model = CatalogUpload
-        fields = ["file_name", "file", "status", "notes"]
+        fields = ["file_name", "category", "upload_type", "file", "status", "notes"]
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
@@ -208,6 +207,10 @@ class CatalogUploadForm(forms.ModelForm):
         self.helper.layout = Layout(
             Row(
                 Column("file_name", css_class="col-md-6"),
+                Column("category", css_class="col-md-6"),
+            ),
+            Row(
+                Column("upload_type", css_class="col-md-6"),
                 Column("status", css_class="col-md-6"),
             ),
             "file",
@@ -220,8 +223,6 @@ class CatalogUploadForm(forms.ModelForm):
                 ),
             ),
         )
-
-
 class ImageBulkUploadForm(forms.ModelForm):
     class Meta:
         model = ImageBulkUpload
@@ -315,3 +316,158 @@ class ProductForm(forms.ModelForm):
                 ),
             ),
         )
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ["order", "amount", "method", "status", "transaction_id", "payment_date", "notes"]
+        widgets = {
+            "payment_date": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column("order", css_class="col-md-6"),
+                Column("amount", css_class="col-md-6"),
+            ),
+            Row(
+                Column("method", css_class="col-md-6"),
+                Column("status", css_class="col-md-6"),
+            ),
+            Row(
+                Column("transaction_id", css_class="col-md-6"),
+                Column("payment_date", css_class="col-md-6"),
+            ),
+            "notes",
+            FormActions(
+                Submit("save", "Save", css_class="btn-primary"),
+                HTML(
+                    f'<a href="{reverse("crud:payment_list")}" '
+                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                ),
+            ),
+        )
+class WarehouseForm(forms.ModelForm):
+    class Meta:
+        model = Warehouse
+        fields = ["name", "location", "address", "capacity", "manager_name", "contact_number", "status"]
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column("name", css_class="col-md-6"),
+                Column("location", css_class="col-md-6"),
+            ),
+            "address",
+            Row(
+                Column("capacity", css_class="col-md-4"),
+                Column("manager_name", css_class="col-md-4"),
+                Column("contact_number", css_class="col-md-4"),
+            ),
+            Row(
+                Column("status", css_class="col-md-6"),
+            ),
+            FormActions(
+                Submit("save", "Save", css_class="btn-primary"),
+                HTML(
+                    f'<a href="{reverse("crud:warehouse_list")}" '
+                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                ),
+            ),
+        )
+class InfluencerCampaignForm(forms.ModelForm):
+    class Meta:
+        model = InfluencerCampaign
+        fields = ["product", "influencer_name", "platform", "followers", "contact",
+                  "campaign_name", "budget", "start_date", "end_date", "status"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column("product", css_class="col-md-6"),
+                Column("campaign_name", css_class="col-md-6"),
+            ),
+            Row(
+                Column("influencer_name", css_class="col-md-6"),
+                Column("platform", css_class="col-md-6"),
+            ),
+            Row(
+                Column("followers", css_class="col-md-6"),
+                Column("contact", css_class="col-md-6"),
+            ),
+            Row(
+                Column("budget", css_class="col-md-4"),
+                Column("start_date", css_class="col-md-4"),
+                Column("end_date", css_class="col-md-4"),
+            ),
+            Row(
+                Column("status", css_class="col-md-6"),
+            ),
+            FormActions(
+                Submit("save", "Save", css_class="btn-primary"),
+                HTML(
+                    f'<a href="{reverse("crud:influencercampaign_list")}" '
+                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                ),
+            ),
+        )
+class AdvertisementForm(forms.ModelForm):
+    class Meta:
+        model = Advertisement
+        fields = ["campaign_name", "product", "platform", "status", "budget", "spent", "clicks", "impressions", "start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column("campaign_name", css_class="col-md-6"),
+                Column("product", css_class="col-md-6"),
+            ),
+            Row(
+                Column("platform", css_class="col-md-6"),
+                Column("status", css_class="col-md-6"),
+            ),
+            Row(
+                Column("budget", css_class="col-md-6"),
+                Column("spent", css_class="col-md-6"),
+            ),
+            Row(
+                Column("clicks", css_class="col-md-6"),
+                Column("impressions", css_class="col-md-6"),
+            ),
+            Row(
+                Column("start_date", css_class="col-md-6"),
+                Column("end_date", css_class="col-md-6"),
+            ),
+            FormActions(
+                Submit("save", "Save", css_class="btn-primary"),
+                HTML(
+                    f'<a href="{reverse("crud:advertisement_list")}" '
+                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                ),
+            ),
+        )
+class InventoryBulkStockUploadForm(forms.Form):
+    file = forms.FileField(
+        label="Stock file (CSV)",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".csv"}),
+    )

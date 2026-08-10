@@ -1,0 +1,5 @@
+{% load i18n %}
+<div class="crud-actions">
+  <a href="{% url 'crud:influencercampaign_update' record.pk %}" class="btn btn-edit" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}" data-modal-url="{% url 'crud:influencercampaign_update' record.pk %}" data-modal-title="{% trans 'Edit campaign' %}"><i class="bi bi-pencil"></i></a>
+  <a href="{% url 'crud:influencercampaign_delete' record.pk %}" class="btn btn-delete" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}" data-modal-url="{% url 'crud:influencercampaign_delete' record.pk %}" data-modal-title="{% trans 'Delete campaign' %}"><i class="bi bi-trash"></i></a>
+</div>
