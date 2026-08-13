@@ -1,0 +1,218 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Bulk Catalog Upload' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:catalogupload_list' %}">{% trans 'Catalog Uploads' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Bulk Upload' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'crud:catalogupload_list' %}" class="text-dark"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="mb-0">{% trans 'Bulk Catalog Upload' %}</h5>
+  </div>
+  <a href="{% url 'crud:support' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-headset me-1"></i>{% trans 'Need Help?' %}</a>
+</div>
+<div class="crud-card">
+  <label class="form-label fw-bold">{% trans 'Search Category' %}</label>
+  <div class="input-group mb-4" style="max-width:420px;">
+    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+    <input type="text" class="form-control" placeholder="{% trans 'Try Sarees, Toys, Charger, Mugs and more…' %}">
+  </div>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="list-group" id="mainCategoryList"></div>
+      <div class="small text-muted mt-2">
+        {% trans "Can't find the category?" %} <a href="#">{% trans 'Search Category' %}</a>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="list-group" id="subCategoryList"></div>
+    </div>
+    <div class="col-md-3">
+      <div class="list-group" id="leafCategoryList"></div>
+    </div>
+    <div class="col-md-3">
+      <div id="finalCategoryArea"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="crudModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="crudModalBody"></div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/crud-modals.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const CREATE_URL = "{% url 'crud:catalogupload_create' %}";
+
+  const CATEGORY_DATA = {
+    your: {
+      label: "{% trans 'Your Categories' %}",
+      leafOnly: ["{% trans 'Gowns - Ethnic' %}"],
+    },
+    men: {
+      label: "{% trans 'Men Fashion' %}",
+      children: {
+        clothing: { label: "{% trans 'Mens Clothing' %}", leaf: ["{% trans 'T-Shirts' %}", "{% trans 'Shirts' %}", "{% trans 'Jeans' %}"] },
+        footwear: { label: "{% trans 'Footwear' %}", leaf: ["{% trans 'Shoes' %}", "{% trans 'Flipflops & Slippers' %}", "{% trans 'Sandals & Floaters' %}", "{% trans 'Ethnic Footwear' %}", "{% trans 'Shoe Accessories' %}"] },
+        accessories: { label: "{% trans 'Accessories' %}", leaf: ["{% trans 'Belts' %}", "{% trans 'Wallets' %}", "{% trans 'Watches' %}"] },
+      },
+    },
+    women: {
+      label: "{% trans 'Women Fashion' %}",
+      children: {
+        ethnic: { label: "{% trans 'Gowns - Ethnic' %}", leaf: ["{% trans 'Anarkali Gowns' %}", "{% trans 'Party Gowns' %}", "{% trans 'Maxi Gowns' %}"] },
+        sarees: { label: "{% trans 'Sarees' %}", leaf: ["{% trans 'Cotton Sarees' %}", "{% trans 'Silk Sarees' %}", "{% trans 'Printed Sarees' %}"] },
+        kurtis: { label: "{% trans 'Kurtis' %}", leaf: ["{% trans 'Straight Kurtis' %}", "{% trans 'A-Line Kurtis' %}"] },
+        footwear: { label: "{% trans 'Footwear' %}", leaf: ["{% trans 'Heels' %}", "{% trans 'Flats' %}", "{% trans 'Sandals' %}"] },
+      },
+    },
+    home: {
+      label: "{% trans 'Home & Living' %}",
+      children: {
+        decor: { label: "{% trans 'Home Decor' %}", leaf: ["{% trans 'Wall Art' %}", "{% trans 'Vases' %}"] },
+        kitchen: { label: "{% trans 'Kitchen & Dining' %}", leaf: ["{% trans 'Cookware' %}", "{% trans 'Dinnerware' %}"] },
+        furnishing: { label: "{% trans 'Furnishing' %}", leaf: ["{% trans 'Bedsheets' %}", "{% trans 'Curtains' %}"] },
+      },
+    },
+    kids: {
+      label: "{% trans 'Kids & Toys' %}",
+      children: {
+        toys: { label: "{% trans 'Toys' %}", leaf: ["{% trans 'Educational Toys' %}", "{% trans 'Soft Toys' %}"] },
+        clothing: { label: "{% trans 'Kids Clothing' %}", leaf: ["{% trans 'Boys Wear' %}", "{% trans 'Girls Wear' %}"] },
+      },
+    },
+    personal: {
+      label: "{% trans 'Personal Care & Wellness' %}",
+      children: {
+        skin: { label: "{% trans 'Skin Care' %}", leaf: ["{% trans 'Face Wash' %}", "{% trans 'Moisturizers' %}"] },
+        hair: { label: "{% trans 'Hair Care' %}", leaf: ["{% trans 'Shampoo' %}", "{% trans 'Oils' %}"] },
+      },
+    },
+    mobiles: {
+      label: "{% trans 'Mobiles & Tablets' %}",
+      children: {
+        mobiles: { label: "{% trans 'Mobiles' %}", leaf: ["{% trans 'Smartphones' %}", "{% trans 'Feature Phones' %}"] },
+        tablets: { label: "{% trans 'Tablets' %}", leaf: ["{% trans 'Android Tablets' %}", "{% trans 'iPads' %}"] },
+      },
+    },
+    electronics: {
+      label: "{% trans 'Consumer Electronics' %}",
+      children: {
+        audio: { label: "{% trans 'Audio' %}", leaf: ["{% trans 'Headphones' %}", "{% trans 'Speakers' %}"] },
+        cameras: { label: "{% trans 'Cameras' %}", leaf: ["{% trans 'DSLR' %}", "{% trans 'Action Cameras' %}"] },
+      },
+    },
+  };
+
+  const mainList = document.getElementById('mainCategoryList');
+  const subList = document.getElementById('subCategoryList');
+  const leafList = document.getElementById('leafCategoryList');
+  const finalArea = document.getElementById('finalCategoryArea');
+
+  function clearNode(node) { node.innerHTML = ''; }
+
+  function renderMain() {
+    clearNode(mainList);
+    Object.keys(CATEGORY_DATA).forEach(function (key, idx) {
+      const cat = CATEGORY_DATA[key];
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action' + (idx === 0 ? ' active' : '');
+      a.textContent = cat.label;
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        [...mainList.children].forEach(el => el.classList.remove('active'));
+        a.classList.add('active');
+        renderSub(key);
+      });
+      mainList.appendChild(a);
+    });
+  }
+
+  function renderSub(mainKey) {
+    clearNode(subList);
+    clearNode(leafList);
+    clearNode(finalArea);
+    const cat = CATEGORY_DATA[mainKey];
+
+    if (cat.leafOnly) {
+      cat.leafOnly.forEach(function (name) {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'list-group-item list-group-item-action';
+        a.textContent = name;
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          showFinal(name, cat.label);
+        });
+        subList.appendChild(a);
+      });
+      return;
+    }
+
+    Object.keys(cat.children).forEach(function (subKey, idx) {
+      const sub = cat.children[subKey];
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action';
+      a.textContent = sub.label;
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        [...subList.children].forEach(el => el.classList.remove('active'));
+        a.classList.add('active');
+        renderLeaf(sub);
+      });
+      subList.appendChild(a);
+    });
+  }
+
+  function renderLeaf(sub) {
+    clearNode(leafList);
+    clearNode(finalArea);
+    sub.leaf.forEach(function (name) {
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action';
+      a.textContent = name;
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        [...leafList.children].forEach(el => el.classList.remove('active'));
+        a.classList.add('active');
+        showFinal(name, sub.label);
+      });
+      leafList.appendChild(a);
+    });
+  }
+
+  function showFinal(name, parentLabel) {
+    finalArea.innerHTML = `
+      <div class="border rounded p-3 d-flex align-items-center gap-3" style="cursor:pointer;" data-modal-url="${CREATE_URL}" data-modal-title="New catalog upload">
+        <i class="bi bi-image" style="font-size:1.5rem; color:#7c3aed;"></i>
+        <div>
+          <div class="fw-bold">${name}</div>
+          <div class="small text-muted">In ${parentLabel}</div>
+        </div>
+      </div>`;
+  }
+
+  renderMain();
+  renderSub('your');
+});
+</script>
+{% endblock %}

@@ -283,7 +283,7 @@ class Inventory(models.Model):
     ]
 
     product = models.ForeignKey("Product", on_delete=models.PROTECT, related_name="inventory_items")
-    
+
     quantity = models.PositiveIntegerField(default=0)
     reorder_level = models.PositiveIntegerField(default=10)
     warehouse = models.ForeignKey(
@@ -452,6 +452,7 @@ class Product(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    gst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="GST % e.g. 18.00")
     image = models.ImageField(upload_to="products/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     created = models.DateTimeField(auto_now_add=True)
@@ -469,6 +470,11 @@ class Product(models.Model):
     @property
     def status_color(self):
         return {"active": "success", "draft": "warning", "inactive": "secondary"}.get(self.status, "secondary")
+
+    @property
+    def selling_price(self):
+        gst_amount = (self.price * self.gst_percent) / 100
+        return self.price + gst_amount
 
 
 class Payment(models.Model):
@@ -676,3 +682,128 @@ class SupportTicket(models.Model):
         return {
             "needs_attention": "danger", "in_progress": "warning", "closed": "success",
         }.get(self.status, "secondary")
+class PayoutCycle(models.Model):
+    STATUS_CHOICES = [
+        ("upcoming", "Upcoming"),
+        ("completed", "Completed"),
+    ]
+
+    cycle_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="upcoming")
+    sales_returns = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ads_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    program_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    program_benefits = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    referral_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    neft_id = models.CharField(max_length=100, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["cycle_date"]
+
+    def __str__(self):
+        return f"Payout {self.cycle_date} ({self.get_status_display()})"
+
+    def get_absolute_url(self):
+        return reverse("crud:payoutcycle_update", args=[self.pk])
+
+    @property
+    def net_amount(self):
+        return (
+            self.sales_returns
+            - self.ads_cost
+            - self.program_cost
+            + self.program_benefits
+            + self.referral_earnings
+        )
+
+
+class CompensationRecovery(models.Model):
+    TYPE_CHOICES = [
+        ("compensation", "Compensation"),
+        ("recovery", "Recovery"),
+    ]
+
+    record_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="compensation")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    description = models.CharField(max_length=200, blank=True)
+    date = models.DateField(default=timezone.now)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.get_record_type_display()} — {self.amount}"
+
+    def get_absolute_url(self):
+        return reverse("crud:compensationrecovery_update", args=[self.pk])
+class CallbackRequest(models.Model):
+    email = models.EmailField()
+    account_name = models.CharField(max_length=150)
+    mobile_number = models.CharField(max_length=20)
+    panel_url = models.URLField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"Callback — {self.account_name}"
+class Promotion(models.Model):
+    TYPE_CHOICES = [
+        ("sale_event", "Sale Event"),
+        ("flexi_growth", "Flexi Growth Offer"),
+        ("deal", "Deal"),
+        ("flash_event", "Flash Event"),
+    ]
+    STATUS_CHOICES = [
+        ("upcoming", "Upcoming"),
+        ("live", "Live"),
+        ("expired", "Expired"),
+    ]
+    PARTICIPATION_CHOICES = [
+        ("open", "Open for Participation"),
+        ("participating", "Participating"),
+        ("closed", "Closed"),
+    ]
+
+    event_name = models.CharField(max_length=150)
+    promotion_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="sale_event")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="upcoming")
+    participation_status = models.CharField(max_length=20, choices=PARTICIPATION_CHOICES, default="open")
+    orders_multiplier = models.PositiveIntegerField(default=1, help_text="e.g. 10 for 'Upto 10 times more orders'")
+    views_multiplier = models.PositiveIntegerField(default=1, help_text="e.g. 10 for 'Upto 10 times more views'")
+    expected_customers_crores = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    last_day_to_join = models.DateField(null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["start_date"]
+
+    def __str__(self):
+        return self.event_name
+
+    def get_absolute_url(self):
+        return reverse("crud:promotion_update", args=[self.pk])
+
+    @property
+    def status_color(self):
+        return {"upcoming": "warning", "live": "success", "expired": "secondary"}.get(self.status, "secondary")
+
+    @property
+    def participation_color(self):
+        return {"open": "primary", "participating": "success", "closed": "secondary"}.get(self.participation_status, "secondary")
+class DailyMetric(models.Model):
+    date = models.DateField(unique=True)
+    total_views = models.PositiveIntegerField(default=0)
+    total_clicks = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["date"]
+
+    def __str__(self):
+        return f"Metrics {self.date}"

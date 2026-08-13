@@ -1,0 +1,67 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Instant Cash Help' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:instant_cash' %}">{% trans 'Instant Cash' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Help' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'crud:instant_cash' %}" class="text-dark"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="mb-0">{% trans 'Instant Cash Help' %}</h5>
+  </div>
+  <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#tncModal">{% trans 'T&C and Privacy Policy' %}</a>
+</div>
+
+<div class="crud-card">
+  <h6 class="fw-bold mb-1">{% trans 'Welcome to Instant Cash Support' %}</h6>
+  <div class="small text-muted mb-3">{% trans "What's your query about?" %}</div>
+
+  <div class="accordion" id="helpAccordion">
+    {% for section in help_sections %}
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#help{{ forloop.counter }}">
+          {{ section.title }}
+        </button>
+      </h2>
+      <div id="help{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#helpAccordion">
+        <div class="accordion-body">
+          {% if section.items %}
+            {% for item in section.items %}
+            <div class="py-2 small"><a href="#" class="text-decoration-none">{{ item }}</a></div>
+            {% endfor %}
+          {% else %}
+            <div class="text-muted small">{% trans 'No sub-topics yet. Please contact support for help with this.' %}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<div class="modal fade" id="tncModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans 'Terms and Conditions' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+          <span class="small fw-semibold">{% trans 'Loan Document.PDF' %}</span>
+          <a href="/media/terms-and-conditions.pdf" download class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i>{% trans 'Download' %}
+          </a>
+        </div>
+        <iframe src="/media/terms-and-conditions.pdf" style="width:100%; height:70vh; border:none;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

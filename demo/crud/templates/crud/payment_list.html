@@ -10,6 +10,102 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
 
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">{% trans 'Payments' %}</h5>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>{% trans 'Download' %}</button>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="crud-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong><i class="bi bi-clock text-warning me-1"></i>{% trans 'Upcoming Payments' %}</strong>
+      </div>
+      {% if upcoming_cycle %}
+        <div class="small text-muted mb-2">{{ upcoming_cycle.cycle_date|date:"d M, y" }} — ₹{{ upcoming_total|floatformat:1 }}</div>
+        <table class="table table-sm mb-2">
+          <thead><tr><th>{% trans 'Transaction Type' %}</th><th>{% trans 'Details' %}</th><th class="text-end">{% trans 'Amount' %}</th></tr></thead>
+          <tbody>
+            <tr><td>{% trans 'Orders' %}</td><td>{% trans 'Sales and returns' %}</td><td class="text-end">₹{{ upcoming_cycle.sales_returns }}</td></tr>
+            <tr><td>{% trans 'Net platform recovery' %}</td><td>{% trans 'Ads Cost' %}</td><td class="text-end">₹{{ upcoming_cycle.ads_cost }}</td></tr>
+            <tr><td></td><td>{% trans 'Program Cost' %}</td><td class="text-end">₹{{ upcoming_cycle.program_cost }}</td></tr>
+            <tr><td>{% trans 'Net platform compensation' %}</td><td>{% trans 'Program Benefits' %}</td><td class="text-end">₹{{ upcoming_cycle.program_benefits }}</td></tr>
+            <tr><td></td><td>{% trans 'Referral Earnings' %}</td><td class="text-end">₹{{ upcoming_cycle.referral_earnings }}</td></tr>
+          </tbody>
+        </table>
+        <div class="d-flex justify-content-between border-top pt-2">
+          <strong>{% trans 'Net amount' %}</strong>
+          <strong>₹{{ upcoming_cycle.net_amount|floatformat:1 }}</strong>
+        </div>
+      {% else %}
+        <div class="text-muted small py-4 text-center">{% trans 'No upcoming payments.' %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="crud-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong><i class="bi bi-check-circle text-success me-1"></i>{% trans 'Completed Payments' %}</strong>
+      </div>
+      {% if completed_cycle %}
+        <div class="small text-muted mb-2">{{ completed_cycle.cycle_date|date:"d M, y" }} — ₹{{ completed_total|floatformat:1 }}</div>
+        <table class="table table-sm mb-2">
+          <thead><tr><th>{% trans 'Transaction Type' %}</th><th>{% trans 'Details' %}</th><th class="text-end">{% trans 'Amount' %}</th></tr></thead>
+          <tbody>
+            <tr><td>{% trans 'Orders' %}</td><td>{% trans 'Sales and returns' %}</td><td class="text-end">₹{{ completed_cycle.sales_returns }}</td></tr>
+            <tr><td>{% trans 'Net platform recovery' %}</td><td>{% trans 'Ads Cost' %}</td><td class="text-end">₹{{ completed_cycle.ads_cost }}</td></tr>
+            <tr><td></td><td>{% trans 'Program Cost' %}</td><td class="text-end">₹{{ completed_cycle.program_cost }}</td></tr>
+            <tr><td>{% trans 'Net platform compensation' %}</td><td>{% trans 'Program Benefits' %}</td><td class="text-end">₹{{ completed_cycle.program_benefits }}</td></tr>
+            <tr><td></td><td>{% trans 'Referral Earnings' %}</td><td class="text-end">₹{{ completed_cycle.referral_earnings }}</td></tr>
+          </tbody>
+        </table>
+        <div class="d-flex justify-content-between border-top pt-2">
+          <strong>{% trans 'Net amount' %}</strong>
+          <span class="small">{% if completed_cycle.neft_id %}NEFT ID: {{ completed_cycle.neft_id }}{% endif %}</span>
+          <strong>₹{{ completed_cycle.net_amount|floatformat:1 }}</strong>
+        </div>
+      {% else %}
+        <div class="text-muted small py-4 text-center">{% trans 'No completed payments.' %}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <h6 class="fw-bold mb-3">{% trans 'Payments over time' %}</h6>
+  <canvas id="paymentsChart" height="80"></canvas>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <div class="d-flex justify-content-between mb-2">
+        <strong>{% trans 'Compensation & Recoveries' %}</strong>
+      </div>
+      <div class="d-flex justify-content-between small mb-1"><span>{% trans 'Compensations' %}</span><span>₹{{ compensation_total }}</span></div>
+      <div class="d-flex justify-content-between small mb-2"><span>{% trans 'Recoveries' %}</span><span>₹{{ recovery_total }}</span></div>
+      <div class="d-flex justify-content-between border-top pt-2"><strong>{% trans 'Total' %}</strong><strong>₹{{ compensation_total|add:recovery_total }}</strong></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <strong>{% trans 'Ads Cost' %}</strong>
+      <div class="text-muted small mt-2 mb-2">{% trans 'Total ad spend across payout cycles' %}</div>
+      <div class="fs-5 fw-bold">₹{{ ads_cost_total }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <strong>{% trans 'Other Links' %}</strong>
+      <div class="mt-2 small"><a href="#" class="text-decoration-none">{% trans 'Referral Payments' %} <i class="bi bi-chevron-right"></i></a></div>
+      <div class="mt-2 small"><a href="{% url 'crud:payments_help' %}" class="text-decoration-none">{% trans 'Have a query?' %} <i class="bi bi-chevron-right"></i></a></div>
+    </div>
+  </div>
+</div>
+
 <div class="crud-filters">
   <form method="get">
     {{ filter.form.order__order_number }}
@@ -36,5 +132,28 @@
     </div>
   </div>
 </div>
+{{ chart_labels|json_script:"chart-labels-data" }}
+{{ chart_payments|json_script:"chart-payments-data" }}
+{{ chart_outstanding|json_script:"chart-outstanding-data" }}
+
 <script src="{% static 'js/crud-modals.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const chartLabels = JSON.parse(document.getElementById('chart-labels-data').textContent);
+  const chartPayments = JSON.parse(document.getElementById('chart-payments-data').textContent);
+  const chartOutstanding = JSON.parse(document.getElementById('chart-outstanding-data').textContent);
+
+  const ctx = document.getElementById('paymentsChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: chartLabels,
+      datasets: [
+        { label: 'Payments to Date', data: chartPayments, backgroundColor: '#7c3aed' },
+        { label: 'Outstanding Payment', data: chartOutstanding, backgroundColor: '#c4b5fd' }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
 {% endblock %}

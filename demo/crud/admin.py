@@ -2,7 +2,11 @@ from django.contrib import admin
 
 from .models import Company, Contact, Project, Tag, Task
 
+from django.contrib import admin
+from .models import PayoutCycle, CompensationRecovery
 
+admin.site.register(PayoutCycle)
+admin.site.register(CompensationRecovery)
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ("name", "industry", "website", "contact_count", "project_count")

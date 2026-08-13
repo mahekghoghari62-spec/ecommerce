@@ -1,0 +1,92 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Influencer Marketing' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Influencer Marketing' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">{% trans 'Influencer Marketing' %}</h5>
+  <div class="d-flex gap-2">
+    <a href="#" class="text-decoration-none small align-self-center"><i class="bi bi-youtube text-danger me-1"></i>{% trans 'How it Works?' %}</a>
+    <a href="{% url 'crud:influencer_select_catalogs' %}" class="btn btn-primary">{% trans 'Select Catalogs' %}</a>
+  </div>
+</div>
+
+<div class="crud-card mb-3" style="background:linear-gradient(120deg,#fdf6ec,#ffffff);">
+  <div class="row align-items-center">
+    <div class="col-md-7">
+      <h4 class="fw-bold mb-3">{% trans 'Grow Orders with Influencer Promotion!' %} 📈</h4>
+      <div class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i><strong>50K+ {% trans 'influencers' %}</strong> {% trans 'can make videos on your products' %}</div>
+      <div class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i>{% trans 'Videos are posted on' %} <strong>{% trans 'Meesho App' %}</strong> + {% trans 'Social Media' %} = <strong>{% trans 'More Visibility, More Sales' %}</strong></div>
+      <a href="{% url 'crud:influencer_select_catalogs' %}" class="btn btn-primary">{% trans 'Select Catalogs' %}</a>
+    </div>
+    <div class="col-md-5 text-center">
+      <i class="bi bi-camera-reels" style="font-size:5rem; color:#7c3aed;"></i>
+    </div>
+  </div>
+</div>
+
+<div class="crud-notice crud-notice-yellow mb-3">
+  <div><i class="bi bi-hand-thumbs-up-fill me-2"></i>{% trans 'The Best Part' %} = <strong>{% trans 'Opt out anytime' %}</strong> {% trans 'from the program, in just one click' %}</div>
+</div>
+
+<div class="row g-3 mb-4 text-center">
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-box-seam" style="font-size:1.6rem; color:#16a34a;"></i>
+      <div class="fw-bold mt-2">{% trans 'No charges on' %}</div>
+      <div class="small text-muted">{% trans 'Returned/Cancelled/RTO orders' %}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-bag-heart" style="font-size:1.6rem; color:#db2777;"></i>
+      <div class="fw-bold mt-2">{% trans 'Choose Catalogs' %}</div>
+      <div class="small text-muted">{% trans 'of your choice' %}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-percent" style="font-size:1.6rem; color:#16a34a;"></i>
+      <div class="fw-bold mt-2">4% - 20%</div>
+      <div class="small text-muted">{% trans 'Set any commission of your choice' %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center fw-bold mb-3" style="color:#16a34a;">
+  {% trans '2Lakh+ Sellers are Growing with Influencer Videos!' %} 🔥
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col"><div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;"><i class="bi bi-play-circle" style="font-size:1.8rem;color:#9ca3af;"></i></div></div>
+  <div class="col"><div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;"><i class="bi bi-play-circle" style="font-size:1.8rem;color:#9ca3af;"></i></div></div>
+  <div class="col"><div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;"><i class="bi bi-play-circle" style="font-size:1.8rem;color:#9ca3af;"></i></div></div>
+  <div class="col"><div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;"><i class="bi bi-play-circle" style="font-size:1.8rem;color:#9ca3af;"></i></div></div>
+  <div class="col"><div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:140px;"><i class="bi bi-play-circle" style="font-size:1.8rem;color:#9ca3af;"></i></div></div>
+</div>
+
+<div class="crud-card">
+  <h6 class="fw-bold mb-3">{% trans 'Frequently Asked Questions' %}</h6>
+  <div class="accordion" id="faqAccordion">
+    {% for question, answer in faqs %}
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ forloop.counter }}">
+          {{ question }}
+        </button>
+      </h2>
+      <div id="faq{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+        <div class="accordion-body small text-muted">{{ answer }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

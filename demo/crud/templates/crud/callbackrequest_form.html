@@ -1,0 +1,6 @@
+{% load crispy_forms_tags %}
+<p class="small text-muted mb-3">{% trans 'Thanks for your interest in Meesho Warehousing. Please fill in your contact details and our team will reach out to you shortly.' %}</p>
+<form method="post">
+  {% csrf_token %}
+  {% crispy form form.helper %}
+</form>

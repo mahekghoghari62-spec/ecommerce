@@ -1,20 +1,22 @@
 {% extends "adminlte/page.html" %}
-{% load i18n crispy_forms_tags %}
+{% load i18n crispy_forms_tags static %}
 
-{% block page_title %}{% if object %}{% trans 'Edit advertisement' %}{% else %}{% trans 'New advertisement' %}{% endif %}{% endblock %}
+{% block page_title %}{% if object %}{% trans 'Edit campaign' %}{% else %}{% trans 'Create New Campaign' %}{% endif %}{% endblock %}
 {% block breadcrumb %}
-  <li class="breadcrumb-item"><a href="{% url 'crud:advertisement_list' %}">{% trans 'Advertisements' %}</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crud:advertisement_list' %}">{% trans 'Advertisement' %}</a></li>
   <li class="breadcrumb-item active" aria-current="page">{% if object %}{% trans 'Edit' %}{% else %}{% trans 'New' %}{% endif %}</li>
 {% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
 <div class="row">
-  <div class="col-lg-6">
-    <div class="card card-primary card-outline">
-      <div class="card-body">
-        {% crispy form %}
-      </div>
+  <div class="col-lg-8 mx-auto">
+    <div class="crud-notice mb-3" style="background:#eef2ff; border:1px solid #c7d2fe; align-items:center; justify-content:flex-start;">
+      <i class="bi bi-info-circle" style="color:var(--crud-primary);"></i>
+      <div class="small">{% trans 'Watch this video to understand how to create an ad campaign' %}</div>
     </div>
+    {% crispy form %}
   </div>
 </div>
 {% endblock %}

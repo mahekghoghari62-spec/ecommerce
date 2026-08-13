@@ -17,7 +17,7 @@
     <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>{% trans 'Filter' %}</button>
     {% if request.GET %}<a href="{% url 'crud:imagebulkupload_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
   </form>
-  <a href="{% url 'crud:imagebulkupload_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:imagebulkupload_create' %}" data-modal-title="{% trans 'New image bulk upload' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New image bulk upload' %}</a>
+  <a href="{% url 'crud:imagebulkupload_upload' %}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>{% trans 'New image bulk upload' %}</a>
 </div>
 
 <div class="crud-card">

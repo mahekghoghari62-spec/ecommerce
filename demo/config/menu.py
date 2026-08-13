@@ -34,15 +34,24 @@ ADMINLTE_MENU = [
     {"text": "Claims", "route": "crud:claim_list", "icon": "bi bi-exclamation-triangle"},
     {"text": "Inventory", "route": "crud:inventory_list", "icon": "bi bi-box-seam"},
     {"text": "Catalog Uploads", "route": "crud:catalogupload_list", "icon": "bi bi-cloud-upload"},
-    {"text": "Image Bulk Uploads", "route": "crud:imagebulkupload_list", "icon": "bi bi-images"},
+    {"text": "Image Bulk Uploads", "route": "crud:imagebulkupload_list", "icon": "bi bi-cloud-upload"},
     {"text": "Quality", "route": "crud:quality_list", "icon": "bi bi-clipboard-check"},
     {"text": "Products", "route": "crud:product_list", "icon": "bi bi-box"},
     {"text": "Payments", "route": "crud:payment_list", "icon": "bi bi-credit-card"},
     {"text": "Warehouse", "route": "crud:warehouse_list", "icon": "bi bi-building"},
     {"header": "BOOST SALES"},
-    {"text": "Influencer Campaigns", "route": "crud:influencercampaign_list", "icon": "bi bi-person-badge"},
+    {"text": "Influencer Marketing", "route": "crud:influencercampaign_list", "icon": "bi bi-person-badge"},
     {"text": "Advertisement", "route": "crud:advertisement_list", "icon": "bi bi-megaphone"},
-
+    {
+        "text": "Promotions",
+        "icon": "bi bi-percent",
+        "submenu": [
+            {"text": "Sale Events", "route": "crud:promotion_list", "icon": "bi bi-circle"},
+        ],
+    },
+    {"text": "Instant Cash", "route": "crud:instant_cash", "icon": "bi bi-cash-coin"},
+    {'header': 'Performance'},
+    {'icon': 'bi bi-bar-chart', 'route': 'crud:business_dashboard', 'text': 'Business Dashboard'},
 ]
 
 # --- Topbar dropdown data (mirrors _topbar.astro) ---

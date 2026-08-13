@@ -1,7 +1,7 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from .models import Advertisement, CatalogUpload, Claim, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order,Payment, Pricing, Project, Product, Quality, Return, Warehouse
+from .models import Advertisement, CatalogUpload, Claim, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order,Payment, Pricing, Project, Product,Promotion, Quality, Return, Warehouse
 DATETIME_FMT = "d/m/Y, h:i A"
 DATE_FMT = "d/m/Y"
 _PROJECT_STATUS_CLASS = {
@@ -315,10 +315,10 @@ class QualityTable(tables.Table):
             return format_html('<span class="text-danger fw-bold">{}</span>', record.defect_count)
         return record.defect_count
 
-
 class ProductTable(tables.Table):
     name = tables.Column(linkify=True)
     image = tables.Column(orderable=False, empty_values=())
+    selling_price = tables.Column(verbose_name="Selling Price (incl. GST)", orderable=False, empty_values=())
     actions = tables.TemplateColumn(
         template_name="crud/_product_actions_column.html",
         orderable=False,
@@ -328,7 +328,7 @@ class ProductTable(tables.Table):
 
     class Meta:
         model = Product
-        fields = ("name", "category", "price", "status")
+        fields = ("name", "category", "price", "gst_percent", "selling_price", "status")
         attrs = {"class": "table table-striped table-hover align-middle mb-0"}
         order_by = "name"
 
@@ -342,10 +342,17 @@ class ProductTable(tables.Table):
     def render_price(self, value):
         return format_html("${}", f"{value:,.2f}")
 
+    def render_gst_percent(self, value):
+        return f"{value}%"
+
+    def render_selling_price(self, record):
+        return format_html("${}", f"{record.selling_price:,.2f}")
+
     def render_image(self, record):
         if record.image:
             return format_html('<img src="{}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">', record.image.url)
         return mark_safe('<span class="text-muted">—</span>')
+
 _PAYMENT_STATUS_CLASS = {
     "pending": "warning", "completed": "success",
     "failed": "danger", "refunded": "secondary",
@@ -471,3 +478,32 @@ class AdvertisementTable(tables.Table):
 
     def render_budget_used_percent(self, record):
         return format_html("{}%", record.budget_used_percent)
+_PROMOTION_STATUS_CLASS = {"upcoming": "warning", "live": "success", "expired": "secondary"}
+_PARTICIPATION_CLASS = {"open": "primary", "participating": "success", "closed": "secondary"}
+
+
+class PromotionTable(tables.Table):
+    event_name = tables.Column(linkify=True)
+    actions = tables.TemplateColumn(
+        template_name="crud/_promotion_actions_column.html",
+        orderable=False,
+        verbose_name="",
+        attrs={"td": {"class": "text-end"}},
+    )
+
+    class Meta:
+        model = Promotion
+        fields = ("event_name", "promotion_type", "status", "participation_status", "start_date", "end_date")
+        attrs = {"class": "table table-striped table-hover align-middle mb-0"}
+        order_by = "start_date"
+
+    def render_status(self, record):
+        cls = _PROMOTION_STATUS_CLASS.get(record.status, "secondary")
+        return format_html('<span class="badge text-bg-{}">{}</span>', cls, record.get_status_display())
+
+    def render_participation_status(self, record):
+        cls = _PARTICIPATION_CLASS.get(record.participation_status, "secondary")
+        return format_html('<span class="badge text-bg-{}">{}</span>', cls, record.get_participation_status_display())
+
+    def render_promotion_type(self, record):
+        return record.get_promotion_type_display()

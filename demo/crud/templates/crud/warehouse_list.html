@@ -1,30 +1,153 @@
 {% extends "adminlte/page.html" %}
-{% load i18n django_tables2 static %}
+{% load i18n static %}
 
-{% block page_title %}Warehouses{% endblock %}
+{% block page_title %}{% trans 'Meesho Warehouse' %}{% endblock %}
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="/">Home</a></li>
-  <li class="breadcrumb-item active" aria-current="page">Warehouses</li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Warehouse' %}</li>
 {% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
 
-<div class="crud-filters">
-  <form method="get">
-    {{ filter.form.name }}
-    {{ filter.form.location }}
-    {{ filter.form.status }}
-    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>{% trans 'Filter' %}</button>
-    {% if request.GET %}<a href="{% url 'crud:warehouse_list' %}" class="btn btn-outline-secondary">{% trans 'Reset' %}</a>{% endif %}
-  </form>
-  <a href="{% url 'crud:warehouse_create' %}" class="btn btn-success" data-modal-url="{% url 'crud:warehouse_create' %}" data-modal-title="{% trans 'New warehouse' %}"><i class="bi bi-plus-lg me-1"></i>{% trans 'New warehouse' %}</a>
+<div class="crud-card mb-3">
+  <h6 class="fw-bold mb-3">{% trans 'Meesho Warehouse' %}</h6>
+</div>
+
+<div class="crud-card mb-3">
+  <div class="row align-items-center g-3">
+    <div class="col-md-7">
+      <h6 class="fw-bold mb-3">{% trans 'Join Meesho Warehousing in 4 easy steps!' %}</h6>
+      <ul class="list-unstyled small">
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{% trans 'Click on "Join Us Now" button below' %}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{% trans "Complete GST and APOB registration (We'll help you)" %}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{% trans 'Dispatch inventory to the warehouse' %}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{% trans 'Watch your business takeoff on Meesho' %}</li>
+      </ul>
+      <div class="d-flex gap-2 mt-3">
+        <a href="#" class="btn btn-primary">{% trans 'Join Us Now' %}</a>
+        <a href="#" class="btn btn-outline-primary" data-modal-url="{% url 'crud:callbackrequest_create' %}" data-modal-title="{% trans 'Meesho Warehousing - Call Me Back' %}">{% trans 'Request Callback' %}</a>
+      </div>
+    </div>
+    <div class="col-md-5 text-center">
+      <div class="rounded p-4" style="background:#4c1d95; color:#fff;">
+        <i class="bi bi-play-circle" style="font-size:2.5rem;"></i>
+        <div class="fw-bold mt-2">{% trans 'Explore Meesho Warehouse: Boost Your Business' %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <h6 class="fw-bold text-center mb-4">{% trans 'Benefits of Meesho Warehouse' %}</h6>
+  <div class="row g-4">
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-graph-up-arrow fs-3 text-primary"></i>
+      <div>
+        <div class="fw-semibold">{% trans 'Grow Sales by 9%-11%' %}</div>
+        <div class="small text-muted">{% trans "Benefits from Meesho's upto Rs 5 customer discount without affecting your margins" %}</div>
+      </div>
+    </div>
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-shield-check fs-3 text-primary"></i>
+      <div>
+        <div class="fw-semibold">{% trans '100% Protection from RTO & Return Frauds' %}</div>
+        <div class="small text-muted">{% trans 'Enjoy peace of mind with guaranteed approval on all valid claims' %}</div>
+      </div>
+    </div>
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-arrow-repeat fs-3 text-primary"></i>
+      <div>
+        <div class="fw-semibold">{% trans 'Reduce Returns, RTOs & Cancellations by 6-7%' %}</div>
+        <div class="small text-muted">{% trans 'Reduce damage related returns with our expert handling' %}</div>
+      </div>
+    </div>
+    <div class="col-md-6 d-flex gap-3">
+      <i class="bi bi-rocket-takeoff fs-3 text-primary"></i>
+      <div>
+        <div class="fw-semibold">{% trans 'Supercharge Operations' %}</div>
+        <div class="small text-muted">{% trans 'Access real-time inventory tracking and performance insights' %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <h6 class="fw-bold text-center mb-3">{% trans 'Warehouse Fees' %}</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle text-center small mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="text-start">{% trans 'Per Unit Charges' %}</th>
+          <th>{% trans 'Upto 150 gms' %}</th>
+          <th>{% trans '151-500 gms' %}</th>
+          <th>{% trans '501-1000 gms' %}</th>
+          <th>{% trans '1001-2000 gms' %}</th>
+          <th>{% trans 'Above 2000 gms' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="text-start">{% trans 'Delivered Orders (Local Zones < 500km from Warehouse)' %}</td><td>₹4</td><td>₹10</td><td>₹13.50</td><td>₹28</td><td>₹38</td></tr>
+        <tr><td class="text-start">{% trans 'Delivered Orders (National Zones > 500km from Warehouse)' %}</td><td>₹15</td><td>₹20</td><td>₹27</td><td>₹40</td><td>₹67</td></tr>
+        <tr><td class="text-start">{% trans 'Return Orders' %}</td><td>₹12.75</td><td>₹14</td><td>₹14.75</td><td>₹20.50</td><td>₹20.50</td></tr>
+        <tr><td class="text-start">{% trans 'Charges for SKUs with inventory unsold for over 30 days' %}</td><td>₹7.50</td><td>₹17</td><td>₹28</td><td>₹50</td><td>₹104</td></tr>
+        <tr><td class="text-start">{% trans 'B2B reject fee' %}</td><td>₹4</td><td>₹11</td><td>₹17</td><td>₹30</td><td>₹66</td></tr>
+        <tr><td class="text-start">{% trans 'RTO processing fee / Storage fee / Insurance charges' %}</td><td>{% trans 'FREE' %}</td><td>{% trans 'FREE' %}</td><td>{% trans 'FREE' %}</td><td>{% trans 'FREE' %}</td><td>{% trans 'FREE' %}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <h6 class="fw-bold text-center mb-3">{% trans 'Reverse Shipping Fees' %}</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle text-center small mb-0">
+      <thead class="table-light">
+        <tr>
+          <th rowspan="2" class="text-start align-middle">{% trans 'Courier Partner' %}</th>
+          <th colspan="2">{% trans 'Upto 500 gms' %}</th>
+          <th colspan="2">{% trans '501-1000 gms' %}</th>
+          <th colspan="2">{% trans '1001-1500 gms' %}</th>
+          <th colspan="2">{% trans '1501-2000 gms' %}</th>
+          <th colspan="2">{% trans '2001-2500 gms' %}</th>
+        </tr>
+        <tr>
+          <th>{% trans 'Self Ship' %}</th><th>{% trans 'Warehouse' %}</th>
+          <th>{% trans 'Self Ship' %}</th><th>{% trans 'Warehouse' %}</th>
+          <th>{% trans 'Self Ship' %}</th><th>{% trans 'Warehouse' %}</th>
+          <th>{% trans 'Self Ship' %}</th><th>{% trans 'Warehouse' %}</th>
+          <th>{% trans 'Self Ship' %}</th><th>{% trans 'Warehouse' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="text-start">Valmo</td><td>₹153</td><td>₹145</td><td>₹163</td><td>₹155</td><td>₹169</td><td>₹161</td><td>₹184</td><td>₹176</td><td>₹202</td><td>₹194</td></tr>
+        <tr><td class="text-start">Xpressbees</td><td>₹155</td><td>₹147</td><td>₹165</td><td>₹157</td><td>₹171</td><td>₹163</td><td>₹186</td><td>₹178</td><td>₹204</td><td>₹196</td></tr>
+        <tr><td class="text-start">Shadowfax</td><td>₹162</td><td>₹154</td><td>₹172</td><td>₹164</td><td>₹178</td><td>₹170</td><td>₹192</td><td>₹184</td><td>₹210</td><td>₹202</td></tr>
+        <tr><td class="text-start">Delhivery</td><td>₹161</td><td>₹153</td><td>₹203</td><td>₹195</td><td>₹244</td><td>₹236</td><td>₹290</td><td>₹282</td><td>₹340</td><td>₹332</td></tr>
+        <tr><td class="text-start">Ecom</td><td>₹165</td><td>₹157</td><td>₹175</td><td>₹167</td><td>₹181</td><td>₹173</td><td>₹196</td><td>₹188</td><td>₹213</td><td>₹205</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="crud-card">
-  {% render_table table %}
+  <h6 class="fw-bold text-center mb-3">{% trans 'One Time Charges per Warehouse Location' %}</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle small mb-0" style="max-width:500px;">
+      <thead class="table-light">
+        <tr>
+          <th>{% trans 'One Time Charges (Per Warehouse Location)' %}</th>
+          <th class="text-end">{% trans 'Amount' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>{% trans 'GST + APOB' %}</td><td class="text-end">₹9999 + GST</td></tr>
+        <tr><td>{% trans 'VPOB Renewal' %}</td><td class="text-end">₹8000 + GST</td></tr>
+        <tr><td>{% trans 'Only APOB' %}</td><td class="text-end">₹500 + GST</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
-
 <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">

@@ -1,0 +1,92 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Image Bulk Upload' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:imagebulkupload_list' %}">{% trans 'Image Bulk Uploads' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Upload' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<h5 class="fw-bold mb-3">{% trans 'Image Bulk Upload' %}</h5>
+
+<div class="row">
+  <div class="col-lg-9">
+    <!-- Pre-filled templates banner -->
+    <div class="crud-notice crud-notice-white mb-3">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-file-earmark-richtext" style="font-size:1.6rem; color:#16a34a;"></i>
+        <div>
+          <div class="crud-notice-title" style="color:#1f2430;">{% trans 'Introducing pre-filled templates for faster bulk uploads' %}</div>
+          <div class="small text-muted">{% trans 'Add product front images and get prefilled catalog template' %}</div>
+        </div>
+      </div>
+      <a href="{% url 'crud:bulk_catalog_categories' %}" class="btn btn-outline-primary">{% trans 'Get Started' %}</a>
+    </div>
+
+    <!-- Drop zone -->
+    <div id="imageDropZone" class="border rounded d-flex flex-column align-items-center justify-content-center text-center py-5"
+         style="border-style:dashed !important; border-color:var(--crud-border); background:#fbfbfe; cursor:pointer; min-height:260px;">
+      <div class="rounded-circle d-flex align-items-center justify-content-center mb-2"
+           style="width:44px;height:44px;background:var(--crud-primary);">
+        <i class="bi bi-plus-lg text-white"></i>
+      </div>
+      <div class="fw-bold" style="color:var(--crud-primary);">{% trans 'Add Images' %}</div>
+      <div class="small text-muted">{% trans 'You can drop images here' %}</div>
+      <input type="file" id="imageFileInput" accept="image/*" multiple hidden>
+    </div>
+
+    <div id="selectedFilesList" class="mt-3"></div>
+  </div>
+
+  <!-- Not allowed sidebar -->
+  <div class="col-lg-3">
+    <div class="crud-card">
+      <div class="text-danger fw-bold small mb-3"><i class="bi bi-slash-circle me-1"></i>{% trans 'Image types which are not allowed:' %}</div>
+      <div class="d-flex flex-column gap-3">
+        {% for label in not_allowed_types %}
+        <div class="d-flex align-items-center gap-2">
+          <div class="bg-light rounded" style="width:40px;height:40px;flex-shrink:0;"></div>
+          <div>
+            <div class="small fw-semibold">{{ label }}</div>
+            <div class="small text-danger"><i class="bi bi-slash-circle"></i> {% trans 'NOT ALLOWED' %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const dropZone = document.getElementById('imageDropZone');
+  const fileInput = document.getElementById('imageFileInput');
+  const list = document.getElementById('selectedFilesList');
+
+  dropZone.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function () {
+    list.innerHTML = '';
+    if (!fileInput.files.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'crud-card';
+    const title = document.createElement('div');
+    title.className = 'fw-bold mb-2';
+    title.textContent = fileInput.files.length + ' {% trans "file(s) selected" %}';
+    wrap.appendChild(title);
+    Array.from(fileInput.files).forEach(function (f) {
+      const row = document.createElement('div');
+      row.className = 'small text-muted';
+      row.textContent = f.name;
+      wrap.appendChild(row);
+    });
+    list.appendChild(wrap);
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Inventory' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:inventory_list' %}">{% trans 'Inventory' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Blocked Products' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<!-- Promo banner -->
+<div class="crud-notice mb-3" style="background:linear-gradient(90deg,#fff3f7,#fff9e6); border:1px solid #ffe0ec; align-items:center; justify-content:space-between;">
+  <div class="d-flex align-items-center gap-3">
+    <i class="bi bi-megaphone-fill" style="font-size:1.6rem; color:#db2777;"></i>
+    <div>
+      <div class="crud-notice-title" style="color:#1f2430;">{% trans 'Schedule Price Drop & Earn more' %}</div>
+      <div class="small text-muted">
+        <i class="bi bi-check-square text-success me-1"></i>{% trans 'Get upto 2x visibility & sales by scheduling recommended price drop' %}
+        &nbsp;&nbsp;<i class="bi bi-check-square text-success me-1"></i>{% trans 'Get ahead of the competition' %}
+        &nbsp;&nbsp;<i class="bi bi-check-square text-success me-1"></i>{% trans 'Enjoy reduced shipping costs from Meesho' %}
+      </div>
+    </div>
+  </div>
+  <a href="{% url 'crud:pricing_list' %}" class="btn btn-primary">{% trans 'Participate Now' %}</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="fw-bold mb-0">{% trans 'Inventory' %}</h5>
+  <div class="d-flex align-items-center gap-2">
+    <input type="text" class="form-control form-control-sm" style="width:280px;" placeholder="{% trans 'Search by Catalog ID/Style ID/SKU ID' %}">
+    <a href="{% url 'crud:bulk_catalog_categories' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-upload me-1"></i>{% trans 'Catalog Upload' %}</a>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-2">
+  <li class="nav-item"><a class="nav-link {% if active_main_tab == 'active' %}active{% endif %}" href="?tab=active">{% trans 'Active' %} ({{ active_count }})</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_main_tab == 'pending' %}active{% endif %}" href="?tab=pending">{% trans 'Activation Pending' %} ({{ pending_count }})</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_main_tab == 'blocked' %}active{% endif %}" href="?tab=blocked">{% trans 'Blocked' %} ({{ blocked_count }})</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_main_tab == 'paused' %}active{% endif %}" href="?tab=paused">{% trans 'Paused' %} ({{ paused_count }})</a></li>
+</ul>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <ul class="nav nav-pills flex-wrap gap-1">
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'all' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=all">{% trans 'All' %} ({{ blocked_count }})</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'duplicate' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=duplicate">{% trans 'Duplicate' %} (0)</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'poor_quality' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=poor_quality">{% trans 'Poor Quality' %} (0)</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'verification_failed' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=verification_failed">{% trans 'Verification Failed' %} (0)</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'account_paused' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=account_paused">{% trans 'Account Paused' %} (0)</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'late_dispatch' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=late_dispatch">{% trans 'Late Dispatch' %} (0)</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_sub_tab == 'others' %}active{% endif %}" href="?tab={{ active_main_tab }}&subtab=others">{% trans 'Others' %} (0)</a></li>
+  </ul>
+  <a href="#" class="text-decoration-none small" data-modal-url="{% url 'crud:inventory_bulk_stock_modal' %}" data-modal-title="{% trans 'Bulk Stock Update' %}"><i class="bi bi-arrow-repeat me-1"></i>{% trans 'Bulk Stock Update' %}</a>
+</div>
+
+<div class="crud-card">
+  {% if active_sub_tab == 'all' and blocked_products %}
+    <table class="table table-striped table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>{% trans 'Product' %}</th>
+          <th>{% trans 'SKU' %}</th>
+          <th>{% trans 'Status' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in blocked_products %}
+        <tr>
+          <td>{{ inv.product.name }}</td>
+          <td>{{ inv.product.sku }}</td>
+          <td><span class="badge text-bg-secondary">{{ inv.get_status_display }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="text-center py-5">
+      <div class="d-inline-flex flex-wrap justify-content-center mb-3" style="width:70px; gap:4px;">
+        <div style="width:30px;height:30px;border:2px solid #d1d5db;border-radius:4px;"></div>
+        <div style="width:30px;height:30px;border:2px solid #d1d5db;border-radius:4px;"></div>
+        <div style="width:30px;height:30px;border:2px solid #d1d5db;border-radius:4px;"></div>
+        <div style="width:30px;height:30px;border:2px solid #d1d5db;border-radius:50%;"></div>
+      </div>
+      <div class="fw-bold">{% trans 'No Catalogs' %}</div>
+      <div class="small text-muted">{% trans "You don't have any catalogs in this category currently." %}</div>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="crudModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="crudModalBody"></div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/crud-modals.js' %}"></script>
+{% endblock %}

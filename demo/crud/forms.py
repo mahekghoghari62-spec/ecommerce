@@ -4,7 +4,7 @@ from crispy_forms.layout import HTML, Column, Layout, Row, Submit
 from django import forms
 from django.urls import reverse
 
-from .models import Advertisement,CatalogUpload, Claim, Contact, ImageBulkUpload, Inventory,InfluencerCampaign, Order, Quality, Return, Pricing, Product ,Payment,Warehouse
+from .models import Advertisement,CatalogUpload, CallbackRequest,Claim, Contact, ImageBulkUpload, Inventory,InfluencerCampaign, Order, Quality, Return, Pricing, Product ,Promotion,Payment,Warehouse
 
 
 class OrderForm(forms.ModelForm):
@@ -283,11 +283,10 @@ class QualityForm(forms.ModelForm):
             ),
         )
 
-
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ["name", "category", "price", "image", "status", "description"]
+        fields = ["name", "category", "price", "gst_percent", "image", "status", "description"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
@@ -304,6 +303,9 @@ class ProductForm(forms.ModelForm):
             ),
             Row(
                 Column("price", css_class="col-md-6"),
+                Column("gst_percent", css_class="col-md-6"),
+            ),
+            Row(
                 Column("status", css_class="col-md-6"),
             ),
             "image",
@@ -438,36 +440,97 @@ class AdvertisementForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.layout = Layout(
-            Row(
-                Column("campaign_name", css_class="col-md-6"),
-                Column("product", css_class="col-md-6"),
-            ),
-            Row(
-                Column("platform", css_class="col-md-6"),
-                Column("status", css_class="col-md-6"),
-            ),
-            Row(
-                Column("budget", css_class="col-md-6"),
-                Column("spent", css_class="col-md-6"),
-            ),
-            Row(
-                Column("clicks", css_class="col-md-6"),
-                Column("impressions", css_class="col-md-6"),
-            ),
-            Row(
-                Column("start_date", css_class="col-md-6"),
-                Column("end_date", css_class="col-md-6"),
-            ),
+            HTML('<div class="crud-card mb-3"><h6 class="fw-bold mb-1">Bid Type</h6><div class="small text-muted mb-3">Ads are billed as Cost Per Click.</div></div>'),
+            HTML('<div class="crud-card mb-3"><h6 class="fw-bold mb-3">Catalog Selection</h6>'),
+            "campaign_name",
+            "product",
+            "platform",
+            HTML('</div>'),
+            HTML('<div class="crud-card mb-3"><h6 class="fw-bold mb-3">Budget</h6>'),
+            "budget",
+            "spent",
+            HTML('</div>'),
+            HTML('<div class="crud-card mb-3"><h6 class="fw-bold mb-3">Performance (optional)</h6>'),
+            "clicks",
+            "impressions",
+            HTML('</div>'),
+            HTML('<div class="crud-card mb-3"><h6 class="fw-bold mb-3">Duration</h6>'),
+            "status",
+            "start_date",
+            "end_date",
+            HTML('</div>'),
             FormActions(
-                Submit("save", "Save", css_class="btn-primary"),
+                Submit("save", "Publish Campaign", css_class="btn-primary"),
                 HTML(
                     f'<a href="{reverse("crud:advertisement_list")}" '
-                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                    f'class="btn btn-outline-secondary ms-2">Discard Campaign</a>'
                 ),
             ),
         )
+
 class InventoryBulkStockUploadForm(forms.Form):
     file = forms.FileField(
         label="Stock file (CSV)",
         widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".csv"}),
     )
+class CallbackRequestForm(forms.ModelForm):
+    class Meta:
+        model = CallbackRequest
+        fields = ["email", "account_name", "mobile_number", "panel_url"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            "email",
+            "account_name",
+            "mobile_number",
+            "panel_url",
+            FormActions(
+                Submit("save", "Submit", css_class="btn-primary"),
+            ),
+        )
+class PromotionForm(forms.ModelForm):
+    class Meta:
+        model = Promotion
+        fields = [
+            "event_name", "promotion_type", "status", "participation_status",
+            "orders_multiplier", "views_multiplier", "expected_customers_crores",
+            "start_date", "end_date", "last_day_to_join",
+        ]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+            "last_day_to_join": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column("event_name", css_class="col-md-6"),
+                Column("promotion_type", css_class="col-md-6"),
+            ),
+            Row(
+                Column("status", css_class="col-md-6"),
+                Column("participation_status", css_class="col-md-6"),
+            ),
+            Row(
+                Column("orders_multiplier", css_class="col-md-4"),
+                Column("views_multiplier", css_class="col-md-4"),
+                Column("expected_customers_crores", css_class="col-md-4"),
+            ),
+            Row(
+                Column("start_date", css_class="col-md-4"),
+                Column("end_date", css_class="col-md-4"),
+                Column("last_day_to_join", css_class="col-md-4"),
+            ),
+            FormActions(
+                Submit("save", "Save", css_class="btn-primary"),
+                HTML(
+                    f'<a href="{reverse("crud:promotion_list")}" '
+                    f'class="btn btn-outline-secondary ms-2">Cancel</a>'
+                ),
+            ),
+        )

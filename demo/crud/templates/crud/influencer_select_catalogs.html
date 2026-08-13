@@ -1,0 +1,93 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Add catalogs to Influencer Marketing' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:influencercampaign_list' %}">{% trans 'Influencer Marketing' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Select Catalogs' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'crud:influencercampaign_list' %}" class="text-dark"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="mb-0">{% trans 'Add catalogs to Influencer Marketing' %}</h5>
+  </div>
+  <a href="#" class="text-decoration-none small"><i class="bi bi-youtube text-danger me-1"></i>{% trans 'How it Works?' %}</a>
+</div>
+
+<div class="crud-notice crud-notice-yellow mb-3">
+  <div><i class="bi bi-hand-thumbs-up-fill me-2"></i>{% trans 'The Best Part' %} = <strong>{% trans 'Opt out anytime' %}</strong> {% trans 'from the program, in just one click' %}</div>
+</div>
+
+<div class="row g-3 mb-3 text-center">
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-bag-heart" style="font-size:1.6rem; color:#db2777;"></i>
+      <div class="fw-bold mt-2">{% trans 'Choose Catalogs' %}</div>
+      <div class="small text-muted">{% trans 'of your choice' %}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-percent" style="font-size:1.6rem; color:#16a34a;"></i>
+      <div class="fw-bold mt-2">4% - 20%</div>
+      <div class="small text-muted">{% trans 'Set any commission for your catalogs' %}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="crud-card h-100">
+      <i class="bi bi-box-seam" style="font-size:1.6rem; color:#16a34a;"></i>
+      <div class="fw-bold mt-2">{% trans 'No charges on' %}</div>
+      <div class="small text-muted">{% trans 'Returned/Cancelled/RTO orders' %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="crud-notice mb-3" style="background:#f1f3f9; border:1px solid var(--crud-border); align-items:center; justify-content:flex-start;">
+  <i class="bi bi-lightbulb" style="color:#d97706;"></i>
+  <div class="small">
+    {% trans 'Videos are also posted on' %} <strong>{% trans 'Meesho app' %}</strong>. {% trans 'Pay Fixed 1% if you get orders from Meesho Video Finds.' %}
+  </div>
+</div>
+
+<div class="crud-card">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0">{% trans 'Select catalogs to add in the program' %}</h6>
+    <input type="text" class="form-control form-control-sm" style="max-width:260px;" placeholder="{% trans 'Search by catalog ID' %}">
+  </div>
+
+  {% if products %}
+    <table class="table table-striped table-hover align-middle">
+      <thead>
+        <tr>
+          <th></th>
+          <th>{% trans 'Product' %}</th>
+          <th>{% trans 'SKU' %}</th>
+          <th>{% trans 'Price' %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><input type="checkbox"></td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.sku }}</td>
+          <td>${{ p.price }}</td>
+          <td class="text-end"><button class="btn btn-sm btn-outline-primary">{% trans 'Add' %}</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-clipboard-heart" style="font-size:3rem; color:#d1d5db;"></i>
+      <div class="fw-bold mt-3">{% trans "Looks like you don't have any catalog inventory currently live on the Meesho app." %}</div>
+      <div class="small text-muted">{% trans 'Please add few catalogs inventory on the platform' %}</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

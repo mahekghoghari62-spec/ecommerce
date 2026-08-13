@@ -1,0 +1,199 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Advertisement' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Advertisement' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-2">
+    <h5 class="fw-bold mb-0">{% trans 'Advertisement' %}</h5>
+    <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e;">₹0 {% trans 'Free Credits Available!' %}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="#" class="text-decoration-none small align-self-center">{% trans 'How it works?' %}</a>
+   <a href="{% url 'crud:advertisement_create' %}" class="btn btn-primary">{% trans 'Create New Campaign' %}</a>
+  </div>
+</div>
+
+<div class="crud-card mb-3" style="background:linear-gradient(90deg,#fff1f5,#fff9e6);">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <div class="fw-bold">{% trans 'Increase Ad budget & get up to 3x more orders' %}</div>
+      <div class="small text-muted mt-1">
+        <i class="bi bi-check-circle-fill text-success me-1"></i>{% trans 'Create campaigns to get more orders with ads' %}
+        &nbsp;&nbsp;<i class="bi bi-check-circle-fill text-success me-1"></i>{% trans 'Increase budget on top sale campaigns' %}
+      </div>
+    </div>
+    <div class="text-center">
+      <div class="small text-muted mb-1">{% trans 'Boost orders now!' %}</div>
+      <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">{% trans 'Add Budget' %}</a>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <span class="badge bg-primary mb-2">{% trans 'NEW' %}</span>
+      <h4 class="fw-bold">{% trans 'Set any ROI you want for your ads' %}</h4>
+      <div class="text-muted mb-3">{% trans 'Better Control, More Orders' %}</div>
+      <a href="{% url 'crud:advertisement_create' %}" class="btn btn-primary" >{% trans 'Create New Campaign' %}</a>
+    </div>
+    <div class="col-md-4 text-center">
+      <i class="bi bi-graph-up-arrow" style="font-size:4rem; color:#7c3aed;"></i>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card mb-3">
+  <h6 class="fw-bold mb-3">{% trans 'Overview' %} <span class="text-muted small fw-normal">({% trans 'Last 30 Days' %})</span></h6>
+  <div class="row text-center g-3">
+    <div class="col">
+      <div class="small text-muted">{% trans 'Ad Spend' %}</div>
+      <div class="fs-5 fw-bold">₹{{ total_ad_spend|floatformat:0 }}</div>
+    </div>
+    <div class="col">
+      <div class="small text-muted">{% trans 'Budget' %}</div>
+      <div class="fs-5 fw-bold">₹{{ total_budget|floatformat:0 }}</div>
+    </div>
+    <div class="col">
+      <div class="small text-muted">{% trans 'Impressions' %}</div>
+      <div class="fs-5 fw-bold">{{ total_impressions }}</div>
+    </div>
+    <div class="col">
+      <div class="small text-muted">{% trans 'Clicks' %}</div>
+      <div class="fs-5 fw-bold">{{ total_clicks }}</div>
+    </div>
+    <div class="col">
+      <div class="small text-muted">{% trans 'Campaigns' %}</div>
+      <div class="fs-5 fw-bold">{{ all_count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="crud-card">
+  <h6 class="fw-bold mb-3">{% trans 'Campaign Listing' %}</h6>
+
+  <ul class="nav nav-tabs crud-status-tabs mb-3">
+    <li class="nav-item"><a class="nav-link {% if active_tab == 'all' %}active{% endif %}" href="?tab=all">{% trans 'All' %} ({{ all_count }})</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_tab == 'live' %}active{% endif %}" href="?tab=live">{% trans 'Live' %} ({{ live_count }})</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_tab == 'paused' %}active{% endif %}" href="?tab=paused">{% trans 'Paused' %} ({{ paused_count }})</a></li>
+    <li class="nav-item"><a class="nav-link {% if active_tab == 'upcoming' %}active{% endif %}" href="?tab=upcoming">{% trans 'Upcoming' %} ({{ upcoming_count }})</a></li>
+  </ul>
+
+  {% if campaigns %}
+  <table class="table table-striped table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th>{% trans 'Campaign' %}</th>
+        <th>{% trans 'Budget' %}</th>
+        <th>{% trans 'Budget Utilized' %}</th>
+        <th>{% trans 'Impressions' %}</th>
+        <th>{% trans 'Clicks' %}</th>
+        <th>{% trans 'CTR %' %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ad in campaigns %}
+      <tr>
+        <td>
+          <div class="fw-bold">{{ ad.campaign_name }}</div>
+          <div class="small text-muted">{{ ad.product.name }} · {{ ad.get_platform_display }}</div>
+          <span class="badge text-bg-{{ ad.status_color }}">{{ ad.get_status_display }}</span>
+        </td>
+        <td>₹{{ ad.budget }}</td>
+        <td>₹{{ ad.spent }}</td>
+        <td>{{ ad.impressions }}</td>
+        <td>{{ ad.clicks }}</td>
+        <td>{{ ad.ctr }}%</td>
+        <td class="text-end">
+          <a href="{% url 'crud:advertisement_update' ad.pk %}" class="btn btn-sm btn-outline-primary" data-modal-url="{% url 'crud:advertisement_update' ad.pk %}" data-modal-title="{% trans 'Edit campaign' %}">{% trans 'Edit' %}</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="text-center text-muted py-5">{% trans 'No campaigns in this category.' %}</div>
+  {% endif %}
+</div>
+<div class="modal fade" id="addBudgetModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans 'August Regional Festive Sale' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="small text-muted mb-3">
+          <i class="bi bi-stars me-1" style="color:var(--crud-primary);"></i>
+          {% trans 'Meesho will top up your existing campaign ROI Plus Auto Campaign / creates a new campaign if you don\'t have one' %}
+        </div>
+
+        <label class="form-label fw-bold small">{% trans 'Set preferred minimum ROI' %}</label>
+        <div class="input-group mb-3">
+          <button class="btn btn-outline-secondary" type="button" id="roiMinus">−</button>
+          <input type="text" class="form-control text-center" id="roiValue" value="5" readonly>
+          <button class="btn btn-outline-secondary" type="button" id="roiPlus">+</button>
+        </div>
+
+        <label class="form-label fw-bold small">{% trans 'Add Daily Budget for Sale (Average)' %}</label>
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="dailyBudgetValue" value="600">
+          </div>
+          <span class="small text-muted text-nowrap">1 {% trans 'days' %}</span>
+        </div>
+
+        <div class="small mb-1">{% trans 'Total Budget:' %} ₹<span id="totalBudgetDisplay">600</span> ({% trans 'August Regional Festive Sale:' %} <span id="totalBudgetDisplay2">600</span>)</div>
+        <div class="small text-muted mb-3">{% trans 'Duration:' %} 16th August</div>
+
+        <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">{% trans 'Review & Continue' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const roiValue = document.getElementById('roiValue');
+  const roiMinus = document.getElementById('roiMinus');
+  const roiPlus = document.getElementById('roiPlus');
+  const budgetInput = document.getElementById('dailyBudgetValue');
+  const totalDisplay = document.getElementById('totalBudgetDisplay');
+  const totalDisplay2 = document.getElementById('totalBudgetDisplay2');
+
+  if (roiMinus) roiMinus.addEventListener('click', function () {
+    const v = Math.max(0, parseInt(roiValue.value) - 1);
+    roiValue.value = v;
+  });
+  if (roiPlus) roiPlus.addEventListener('click', function () {
+    roiValue.value = parseInt(roiValue.value) + 1;
+  });
+  if (budgetInput) budgetInput.addEventListener('input', function () {
+    totalDisplay.textContent = budgetInput.value || 0;
+    totalDisplay2.textContent = budgetInput.value || 0;
+  });
+});
+</script>
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="crudModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="crudModalBody"></div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/crud-modals.js' %}"></script>
+{% endblock %}

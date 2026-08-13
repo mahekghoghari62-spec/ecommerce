@@ -1,0 +1,87 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{{ faq.q }}{% endblock %}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link active" href="{% url 'crud:payments_help' %}">{% trans 'Help' %}</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'crud:payments_my_tickets' %}">{% trans 'My Tickets' %}</a></li>
+</ul>
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crud:payments_help' %}">{% trans 'Help' %}</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crud:payments_help' %}">{% trans 'Payments' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ faq.q }}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="row g-3">
+  <div class="col-lg-9">
+    <div class="crud-card">
+      <h5 class="fw-bold mb-3">{{ faq.q }}</h5>
+
+      {% if faq.show_order_lookup %}
+        <div class="fw-semibold small mb-2">{{ faq.intro }}</div>
+        <form class="mb-3" style="max-width:400px;">
+          <input type="text" class="form-control mb-2" placeholder="{% trans 'Order Id / Sub Order ID' %} *">
+          <button type="submit" class="btn btn-secondary btn-sm">{% trans 'Submit' %}</button>
+        </form>
+      {% endif %}
+
+      {% for para in faq.body %}
+        <p class="small">{{ para }}</p>
+      {% endfor %}
+
+      {% if faq.steps %}
+        <div class="small mb-2">{% trans 'Please follow the below steps:' %}</div>
+        <ol class="small">
+          {% for step in faq.steps %}<li>{{ step }}</li>{% endfor %}
+        </ol>
+      {% endif %}
+
+      {% if faq.note %}
+        <p class="small"><strong>{% trans 'Note:' %}</strong> {{ faq.note }}</p>
+      {% endif %}
+
+      {% if faq.closing %}
+        <p class="small">{{ faq.closing }}</p>
+      {% endif %}
+
+      <hr>
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="small fw-semibold">{% trans 'Was this information helpful?' %}</span>
+        <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-hand-thumbs-up"></i> {% trans 'Yes' %}</button>
+        <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-hand-thumbs-down"></i> {% trans 'No' %}</button>
+      </div>
+
+      <hr>
+      <div class="fw-semibold small mb-2">{% trans 'Issue still not resolved?' %}</div>
+      <a href="{% url 'crud:claim_create' %}" class="btn btn-outline-primary btn-sm" data-modal-url="{% url 'crud:claim_create' %}" data-modal-title="{% trans 'Raise a Ticket' %}">{% trans 'Raise a Ticket' %}</a>
+      <span class="text-muted small ms-2">{% trans 'Expect response in 3 hours' %}</span>
+    </div>
+  </div>
+
+  <div class="col-lg-3">
+    <div class="crud-card">
+      <h6 class="fw-bold mb-3">{% trans 'Find More Help' %}</h6>
+      {% for other in other_faqs %}
+        <div class="mb-2"><a href="{% url 'crud:payments_help_detail' other.slug %}" class="text-decoration-none small">{{ other.q }}</a></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="crudModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="crudModalBody"></div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/crud-modals.js' %}"></script>
+{% endblock %}

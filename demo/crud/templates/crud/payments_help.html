@@ -1,0 +1,30 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Payments Help' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crud:payment_list' %}">{% trans 'Payments' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Help' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link active" href="{% url 'crud:payments_help' %}">{% trans 'Help' %}</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'crud:payments_my_tickets' %}">{% trans 'My Tickets' %}</a></li>
+</ul>
+
+<div class="crud-card">
+  <h5 class="fw-bold mb-3"><i class="bi bi-credit-card me-2 text-primary"></i>{% trans 'Payments' %}</h5>
+  <div class="list-group list-group-flush">
+    {% for faq in faqs %}
+    <a href="{% url 'crud:payments_help_detail' faq.slug %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      {{ faq.q }}
+      <i class="bi bi-chevron-right text-muted"></i>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Business Dashboard' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Business Dashboard' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="fw-bold mb-1">{% trans 'Business Overview' %}</h5>
+    <div class="text-muted small">{{ date_range_label }}</div>
+  </div>
+  <div class="btn-group">
+    <a href="?period=yesterday" class="btn btn-sm {% if active_period == 'yesterday' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans 'Yesterday' %}</a>
+    <a href="?period=last7" class="btn btn-sm {% if active_period == 'last7' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans 'Last 7 Days' %}</a>
+    <a href="?period=last30" class="btn btn-sm {% if active_period == 'last30' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans 'Last 30 Days' %}</a>
+  </div>
+</div>
+
+<div class="crud-card mb-0">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <strong>{% trans 'Orders' %}</strong>
+  </div>
+
+  {% if has_trend %}
+    <canvas id="ordersChart" height="90"></canvas>
+  {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-graph-up" style="font-size:2.5rem; opacity:.3;"></i>
+      <div class="fw-bold mt-2">{% trans 'No Trend to Show' %}</div>
+      <div class="small">{% trans 'There is no sufficient data to show the results in the selected timeframe.' %}</div>
+    </div>
+  {% endif %}
+</div>
+
+<div class="crud-card">
+  <div class="row text-center g-3">
+    <div class="col">
+      <div class="text-muted small">{% trans 'Total Views' %}</div>
+      <div class="fs-5 fw-bold">{{ total_views }}</div>
+    </div>
+    <div class="col">
+      <div class="text-muted small">{% trans 'Total Clicks' %}</div>
+      <div class="fs-5 fw-bold">{{ total_clicks }}</div>
+    </div>
+    <div class="col">
+      <div class="text-muted small">{% trans 'Total Orders' %}</div>
+      <div class="fs-5 fw-bold">{{ total_orders }}</div>
+    </div>
+    <div class="col">
+      <div class="text-muted small">{% trans 'Conversion Rate' %}</div>
+      <div class="fs-5 fw-bold">{{ conversion_rate }}%</div>
+    </div>
+    <div class="col">
+      <div class="text-muted small">{% trans 'Total Sales' %}</div>
+      <div class="fs-5 fw-bold">₹{{ total_sales|floatformat:0 }}</div>
+    </div>
+    <div class="col">
+      <div class="text-muted small">{% trans 'Return Percentage' %}</div>
+      <div class="fs-5 fw-bold">{% if return_percentage is not None %}{{ return_percentage }}%{% else %}-{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <h6 class="fw-bold mb-1">{% trans 'Product Performance' %}</h6>
+  <div class="text-muted small mb-3">{{ date_range_label }}</div>
+
+  <div class="crud-card">
+    {% if top_products %}
+      <table class="table table-striped table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>{% trans 'Product' %}</th>
+            <th class="text-end">{% trans 'Orders' %}</th>
+            <th class="text-end">{% trans 'Sales' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in top_products %}
+          <tr>
+            <td>{{ p.product__name }}</td>
+            <td class="text-end">{{ p.order_count }}</td>
+            <td class="text-end">₹{{ p.sales_total|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-file-earmark-text" style="font-size:2.5rem; opacity:.3;"></i>
+        <div class="mt-2 small">{% trans 'No product performance data for this period.' %}</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if has_trend %}
+{{ chart_labels|json_script:"bd-chart-labels" }}
+{{ chart_orders|json_script:"bd-chart-orders" }}
+{{ chart_sales|json_script:"bd-chart-sales" }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const bdLabels = JSON.parse(document.getElementById('bd-chart-labels').textContent);
+  const bdOrders = JSON.parse(document.getElementById('bd-chart-orders').textContent);
+  new Chart(document.getElementById('ordersChart'), {
+    type: 'line',
+    data: {
+      labels: bdLabels,
+      datasets: [{ label: 'Orders', data: bdOrders, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.1)', fill: true, tension: 0.3 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+</script>
+{% endif %}
+{% endblock %}

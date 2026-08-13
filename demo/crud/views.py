@@ -10,10 +10,10 @@ from django.views.generic import TemplateView
 from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import redirect
-from .filters import AdvertisementFilter, CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InfluencerCampaignFilter, InventoryFilter, OrderFilter, PaymentFilter, PricingFilter, ProductFilter, ProjectFilter, QualityFilter, ReturnFilter, WarehouseFilter
-from .forms import AdvertisementForm, CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InfluencerCampaignForm, InventoryForm, OrderForm, PaymentForm, PricingForm, ProductForm, QualityForm, ReturnForm, WarehouseForm
-from .models import Advertisement, CatalogUpload, Claim, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment, Pricing, Product, Project, Quality, Return,SupportTicket, Warehouse
-from .tables import AdvertisementTable, CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InfluencerCampaignTable, InventoryTable, OrderTable, PaymentTable, PricingTable, ProductTable, ProjectTable, QualityTable, ReturnTable, WarehouseTable
+from .filters import AdvertisementFilter, CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InfluencerCampaignFilter, InventoryFilter, OrderFilter, PaymentFilter, PricingFilter, ProductFilter, ProjectFilter, PromotionFilter, QualityFilter, ReturnFilter, WarehouseFilter
+from .forms import AdvertisementForm, CallbackRequestForm, CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InfluencerCampaignForm, InventoryForm, OrderForm, PaymentForm, PricingForm, ProductForm, PromotionForm, QualityForm, ReturnForm, WarehouseForm
+from .models import Advertisement, CallbackRequest, CatalogUpload, Claim, Contact, DailyMetric, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment, Pricing, Product, Project, Promotion, Quality, Return,SupportTicket, Warehouse, PayoutCycle, CompensationRecovery
+from .tables import AdvertisementTable, CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InfluencerCampaignTable, InventoryTable, OrderTable, PaymentTable, PricingTable, ProductTable, ProjectTable, PromotionTable, QualityTable, ReturnTable, WarehouseTable
 import csv
 import io
 from django.http import HttpResponse, JsonResponse
@@ -324,22 +324,8 @@ class ClaimDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Claim for “{self.object.order.order_number}” deleted.")
         return super().form_valid(form)
-class SupportView(LoginRequiredMixin, TemplateView):
-    template_name = "crud/support.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        tickets = SupportTicket.objects.all()
-        context["tickets"] = tickets
-        context["all_count"] = tickets.count()
-        context["needs_attention_count"] = tickets.filter(status="needs_attention").count()
-        context["in_progress_count"] = tickets.filter(status="in_progress").count()
-        context["closed_count"] = tickets.filter(status="closed").count()
-        context["active_tab"] = self.request.GET.get("tab", "help")
-        return context
-
-class SupportView(LoginRequiredMixin, TemplateView):
-    template_name = "crud/support.html"
+    class SupportView(LoginRequiredMixin, TemplateView):
+            template_name = "crud/support.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -650,8 +636,45 @@ class QualityDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Quality check for “{self.object.product.name}” deleted.")
         return super().form_valid(form)
+class QualityDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/quality_dashboard.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_quality = Quality.objects.select_related("product").all()
 
+        context["total_checks"] = all_quality.count()
+        context["blocking_soon"] = all_quality.filter(status="failed")
+        context["action_pending"] = all_quality.filter(status__in=["pending", "rework"])
+        context["fixed"] = all_quality.filter(status="passed")
+
+        context["blocking_soon_count"] = context["blocking_soon"].count()
+        context["action_pending_count"] = context["action_pending"].count()
+        context["fixed_count"] = context["fixed"].count()
+
+        total_defects = sum(q.defect_count for q in all_quality)
+        avg_defects = round(total_defects / all_quality.count(), 1) if all_quality.count() else 0
+        context["avg_defects"] = avg_defects
+        context["has_score"] = all_quality.count() > 0
+
+        context["active_tab"] = self.request.GET.get("tab", "action_pending")
+        return context
+
+class BlockedProductsView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/blocked_products.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_inventory = Inventory.objects.select_related("product")
+        context["active_count"] = all_inventory.filter(status="in_stock").count()
+        context["pending_count"] = all_inventory.filter(status="low_stock").count()
+        context["blocked_count"] = all_inventory.filter(status="discontinued").count()
+        context["paused_count"] = all_inventory.filter(status="out_of_stock").count()
+        context["active_main_tab"] = self.request.GET.get("tab", "blocked")
+        context["active_sub_tab"] = self.request.GET.get("subtab", "all")
+        context["blocked_products"] = all_inventory.filter(status="discontinued")
+        return context
+    
 # --- Products: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class ProductListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     model = Product
@@ -704,6 +727,29 @@ class PaymentListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     def get_queryset(self):
         return super().get_queryset().select_related("order")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        upcoming_cycles = PayoutCycle.objects.filter(status="upcoming").order_by("cycle_date")
+        completed_cycles = PayoutCycle.objects.filter(status="completed").order_by("-cycle_date")
+
+        context["upcoming_cycle"] = upcoming_cycles.first()
+        context["upcoming_total"] = upcoming_cycles.aggregate(total=models.Sum("sales_returns"))["total"] or 0
+        context["completed_cycle"] = completed_cycles.first()
+        context["completed_cycles_list"] = completed_cycles[:3]
+        context["completed_total"] = completed_cycles.aggregate(total=models.Sum("sales_returns"))["total"] or 0
+
+        all_cycles = PayoutCycle.objects.all().order_by("cycle_date")
+        context["chart_labels"] = [c.cycle_date.strftime("%d %b") for c in all_cycles]
+        context["chart_payments"] = [float(c.net_amount) if c.status == "completed" else 0 for c in all_cycles]
+        context["chart_outstanding"] = [float(c.net_amount) if c.status == "upcoming" else 0 for c in all_cycles]
+
+        comp_qs = CompensationRecovery.objects.filter(record_type="compensation")
+        rec_qs = CompensationRecovery.objects.filter(record_type="recovery")
+        context["compensation_total"] = comp_qs.aggregate(total=models.Sum("amount"))["total"] or 0
+        context["recovery_total"] = rec_qs.aggregate(total=models.Sum("amount"))["total"] or 0
+        context["ads_cost_total"] = PayoutCycle.objects.aggregate(total=models.Sum("ads_cost"))["total"] or 0
+        return context
 
 class PaymentCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Payment
@@ -735,8 +781,97 @@ class PaymentDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Payment for “{self.object.order.order_number}” deleted.")
         return super().form_valid(form)
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+
+PAYMENTS_FAQS = [
+    {
+        "slug": "not-received-payment",
+        "q": "I have not received payments for my orders",
+        "intro": "To check for payment settlement, please provide the Order ID / Sub Order ID below:",
+        "show_order_lookup": True,
+        "body": [
+            "We prioritize timely payments for your orders, settling payments within 7 business days after delivery.",
+        ],
+        "steps": [
+            "Go to the Payments Section",
+            "You can use 'Search option' on the right top corner. You will be able to see the required details by using sub-order numbers or order numbers.",
+        ],
+        "note": "If the order is RTO/Cancelled then the payment will be '0' from Meesho's end.",
+        "closing": "If you haven't received your payment even after 7 business days since delivery, kindly raise a ticket and our support team will assist in resolving the issue promptly.",
+    },
+    {"slug": "upcoming-payments", "q": "I want to know about my upcoming payments",
+     "body": ["Upcoming payments are shown on the Payments dashboard along with the expected payout date and full breakdown of sales, deductions and benefits."]},
+    {"slug": "gst-sales-report", "q": "I want GST or Sales report",
+     "body": ["You can download your GST and Sales report anytime using the Download button on the Payments page."]},
+    {"slug": "commission-invoice", "q": "I want to download the Commission Tax Invoice",
+     "body": ["Commission Tax Invoices are generated for each completed payout cycle. If you can't locate one, please raise a ticket with the payout date."]},
+    {"slug": "incorrect-invoice", "q": "I have received incorrect Invoice",
+     "body": ["Please raise a ticket with the order details and our team will review and correct the invoice."]},
+    {"slug": "change-bank-details", "q": "I want to change my bank details",
+     "body": ["Bank details can be updated from your Account settings. Changes may take 2-3 business days to reflect in your payouts."]},
+    {"slug": "tds-reimbursement", "q": "I want to file TDS reimbursement",
+     "body": ["TDS reimbursement requests can be filed by raising a support ticket along with your TDS certificate attached."]},
+    {"slug": "shipping-charges", "q": "I want to know about Shipping charges",
+     "body": ["Shipping charges are deducted automatically based on order weight and destination, and are visible in your payout breakdown."]},
+    {"slug": "settlement-calculation", "q": "I want to understand my settlement calculation",
+     "body": ["Settlement = Sales Returns − Ads Cost − Program Cost + Program Benefits + Referral Earnings."]},
+    {"slug": "referral-payments", "q": "I have not received payments for referrals",
+     "body": ["Referral payments are processed monthly. Check the Referral Payments link on your Payments page for the latest status."]},
+    {"slug": "lost-shipment-compensation", "q": "I have not received compensation for my lost shipment",
+     "body": ["Compensation for lost shipments is credited automatically once the claim is approved by our team."]},
+    {"slug": "returns-assurance", "q": "What is the Returns Assurance Program?",
+     "body": ["It's a program that protects your margin against unexpected return costs by capping your return-related deductions."]},
+    {"slug": "order-deduction", "q": "I want to know about the deduction for my order",
+     "body": ["Deductions are listed transaction-wise in the payout details for each cycle, including ads cost, program cost and shipping."]},
+    {"slug": "other-payment-issues", "q": "Other Payment related issues",
+     "body": ["For any other payment issue not listed here, please raise a support ticket and our team will assist you."]},
+]
 
 
+class PaymentsHelpView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/payments_help.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["faqs"] = PAYMENTS_FAQS
+        return context
+
+
+class PaymentsHelpDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/payments_help_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = kwargs.get("slug")
+        faq = next((f for f in PAYMENTS_FAQS if f["slug"] == slug), None)
+        if not faq:
+            raise Http404("FAQ not found")
+        context["faq"] = faq
+        context["other_faqs"] = [f for f in PAYMENTS_FAQS if f["slug"] != slug]
+        return context
+class PaymentsMyTicketsView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/payments_my_tickets.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tickets = SupportTicket.objects.all()
+        active_tab = self.request.GET.get("tab", "all")
+        context["active_tab"] = active_tab
+        context["all_count"] = tickets.count()
+        context["needs_attention_count"] = tickets.filter(status="needs_attention").count()
+        context["in_progress_count"] = tickets.filter(status="in_progress").count()
+        context["closed_count"] = tickets.filter(status="closed").count()
+
+        if active_tab == "needs_attention":
+            tickets = tickets.filter(status="needs_attention")
+        elif active_tab == "in_progress":
+            tickets = tickets.filter(status="in_progress")
+        elif active_tab == "closed":
+            tickets = tickets.filter(status="closed")
+
+        context["tickets"] = tickets
+        return context
 # --- Warehouses: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class WarehouseListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     model = Warehouse
@@ -777,7 +912,15 @@ class WarehouseDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
         messages.success(self.request, f"Warehouse “{self.object.name}” deleted.")
         return super().form_valid(form)
 
+class CallbackRequestCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
+    model = CallbackRequest
+    form_class =  CallbackRequestForm
+    template_name = "crud/callbackrequest_form.html"
+    success_url = reverse_lazy("crud:warehouse_list")
 
+    def form_valid(self, form):
+        messages.success(self.request, "Your callback request has been submitted. Our team will reach out shortly.")
+        return super().form_valid(form)
 # --- Influencer Campaigns: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class InfluencerCampaignListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     model = InfluencerCampaign
@@ -918,3 +1061,249 @@ class ReduceRTOReturnsView(LoginRequiredMixin, TemplateView):
 
         messages.success(request, f"Discount applied to {applied_count} product(s).")
         return redirect("crud:pricing_list")
+class BulkCatalogCategoryView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/bulk_catalog_category.html"
+class SupportView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/support.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tickets = SupportTicket.objects.all()
+        context["tickets"] = tickets
+        context["all_count"] = tickets.count()
+        context["needs_attention_count"] = tickets.filter(status="needs_attention").count()
+        context["in_progress_count"] = tickets.filter(status="in_progress").count()
+        context["closed_count"] = tickets.filter(status="closed").count()
+        context["active_tab"] = self.request.GET.get("tab", "help")
+
+        context["return_help_topics"] = [
+            "I have received wrong return", "I have received damaged return",
+            "I have not received my Return/RTO shipment", "Item/s are missing in my return",
+            "I have received a wrong barcoded package in RTO", "I have received used product as return",
+            "Return/RTO product not received but marked delivered - Need Proof of Delivery",
+            "I have an issue with Exchange order",
+            "Return/RTO Delivery Issue - False Attempt by Logistic Partner",
+            "I am not able to generate invoice for exchange order",
+            "I have received an RTO in a non-barcoded package",
+            "I am unable to raise Wrong Return / RTO claims",
+            "Order return shipping charge fee issue",
+            "When will I receive my wrong return related compensation",
+            "I want to stop using the Wrong/Defective Returns Feature",
+            "My order has been marked as Returnless Refund. What is Returnless Refund?",
+            "Other Returns/RTO and Exchange related issue",
+        ]
+        context["help_categories"] = [
+            "Cataloging & Pricing", "Orders & Delivery", "Payments", "Inventory",
+            "Account", "Advertisements & Promotions", "Instant Cash", "Others",
+        ]
+        return context
+class ImageBulkUploadPageView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/imagebulkupload_upload.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["not_allowed_types"] = [
+            "Watermark image", "Fake branded/1st copy", "Image with price",
+            "Pixelated image", "Inverted image", "Blur/unclear image",
+            "Incomplete image", "Stretched/shrunk image", "Image with props", "Image with text",
+        ]
+        return context
+class InfluencerMarketingDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/influencer_marketing_dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["total_campaigns"] = InfluencerCampaign.objects.count()
+        context["faqs"] = [
+            ("Where can I access the Terms and Conditions of the Influencer Marketing Program?",
+             "Please click here to view the detailed Terms and Conditions."),
+            ("How can I opt in to the program?", "Go to Influencer Marketing and click Select Catalogs to opt in."),
+            ("What is Influencer Marketing/Affiliate Marketing Program?",
+             "A program where creators make videos on your products to drive orders."),
+            ("How does the influencer marketing program work?",
+             "Creators post content on social media and Meesho App; orders from that content are attributed to your catalogs."),
+            ("Why should I participate in this program?", "It increases visibility and sales at no upfront cost."),
+            ("Are there any charges for opt-in or content making?", "No, there are no charges for opt-in or content creation."),
+            ("Can I set my own creator commission?", "Yes, you can set a commission between 4% and 20%."),
+            ("What happens with non delivered orders coming via this program?",
+             "There is no charge for non-delivered orders (return/RTO/cancellations). You pay only when the order is successfully delivered."),
+            ("What are the social media channels via which my catalogs would be promoted?",
+             "Your catalogs will be promoted by creators on YouTube, Instagram, Telegram and Facebook, and shown as reels on the Meesho App."),
+            ("How can I opt out from the program?", "You can opt out anytime from the program in just one click."),
+        ]
+        return context
+class InfluencerSelectCatalogsView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/influencer_select_catalogs.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["products"] = Product.objects.filter(status="active")
+        return context
+class AdvertisementDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/advertisement_dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_ads = Advertisement.objects.select_related("product").all()
+
+        context["total_ad_spend"] = sum(a.spent for a in all_ads)
+        context["total_clicks"] = sum(a.clicks for a in all_ads)
+        context["total_impressions"] = sum(a.impressions for a in all_ads)
+        context["total_budget"] = sum(a.budget for a in all_ads)
+
+        context["all_count"] = all_ads.count()
+        context["live_count"] = all_ads.filter(status="active").count()
+        context["paused_count"] = all_ads.filter(status="paused").count()
+        context["upcoming_count"] = all_ads.filter(status="draft").count()
+
+        active_tab = self.request.GET.get("tab", "all")
+        context["active_tab"] = active_tab
+        if active_tab == "live":
+            context["campaigns"] = all_ads.filter(status="active")
+        elif active_tab == "paused":
+            context["campaigns"] = all_ads.filter(status="paused")
+        elif active_tab == "upcoming":
+            context["campaigns"] = all_ads.filter(status="draft")
+        else:
+            context["campaigns"] = all_ads
+        return context
+# --- Promotions: full CRUD (tables2 + django-filter + crispy form + messages) ---
+class PromotionListView(LoginRequiredMixin, SingleTableMixin, FilterView):
+    model = Promotion
+    table_class = PromotionTable
+    filterset_class = PromotionFilter
+    template_name = "crud/promotion_list.html"
+    table_pagination = {"per_page": 10}
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_promos = Promotion.objects.all()
+        context["upcoming_count"] = all_promos.filter(status="upcoming").count()
+        context["live_count"] = all_promos.filter(status="live").count()
+        context["expired_count"] = all_promos.filter(status="expired").count()
+        context["active_status_tab"] = self.request.GET.get("status_tab", "upcoming")
+        return context
+
+
+class PromotionCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
+    model = Promotion
+    form_class = PromotionForm
+    template_name = "crud/promotion_form.html"
+    success_url = reverse_lazy("crud:promotion_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Promotion “{form.instance.event_name}” created.")
+        return super().form_valid(form)
+
+
+class PromotionUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
+    model = Promotion
+    form_class = PromotionForm
+    template_name = "crud/promotion_form.html"
+    success_url = reverse_lazy("crud:promotion_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Promotion “{form.instance.event_name}” updated.")
+        return super().form_valid(form)
+
+
+class PromotionDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
+    model = Promotion
+    template_name = "crud/promotion_confirm_delete.html"
+    success_url = reverse_lazy("crud:promotion_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Promotion “{self.object.event_name}” deleted.")
+        return super().form_valid(form)
+class InstantCashView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/instant_cash.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_interested"] = self.request.session.get("instant_cash_interested", False)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        request.session["instant_cash_interested"] = True
+        messages.success(request, "Thanks! You've been added to our waiting list.")
+        return redirect("crud:instant_cash")
+class InstantCashHelpView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/instant_cash_help.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["help_sections"] = [
+            {
+                "title": "Technical & App Issues",
+                "items": ["App Crash / Loading / Timeout", "OTP / Login / Network Errors", "Buttons / Navigation / UI Errors"],
+            },
+            {"title": "Application and Eligibility", "items": []},
+            {"title": "KYC and Selfie", "items": []},
+            {"title": "Doc Signing and Verification and Auto-Debit Setup", "items": []},
+            {"title": "Loan Offer & Terms Clarification", "items": []},
+            {"title": "Disbursal & Account Credit", "items": []},
+            {"title": "Others / General Queries", "items": []},
+        ]
+        return context
+from datetime import timedelta
+from django.db.models import Sum, Count
+
+
+class BusinessDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/business_dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        period = self.request.GET.get("period", "last7")
+        today = timezone.now().date()
+
+        if period == "yesterday":
+            start_date = end_date = today - timedelta(days=1)
+        elif period == "last30":
+            start_date, end_date = today - timedelta(days=29), today
+        else:
+            start_date, end_date = today - timedelta(days=6), today
+            period = "last7"
+
+        context["active_period"] = period
+        context["date_range_label"] = f"{start_date.day} {start_date.strftime('%b %y')} - {end_date.day} {end_date.strftime('%b %y')}"
+        orders_qs = Order.objects.filter(order_date__date__range=[start_date, end_date])
+        total_orders = orders_qs.count()
+        total_sales = orders_qs.aggregate(total=Sum("amount"))["total"] or 0
+
+        metrics_qs = DailyMetric.objects.filter(date__range=[start_date, end_date])
+        total_views = metrics_qs.aggregate(total=Sum("total_views"))["total"] or 0
+        total_clicks = metrics_qs.aggregate(total=Sum("total_clicks"))["total"] or 0
+
+        returns_qs = Return.objects.filter(order__in=orders_qs)
+        return_percentage = round((returns_qs.count() / total_orders) * 100, 1) if total_orders else None
+        conversion_rate = round((total_orders / total_clicks) * 100, 1) if total_clicks else 0
+
+        context["total_views"] = total_views
+        context["total_clicks"] = total_clicks
+        context["total_orders"] = total_orders
+        context["total_sales"] = total_sales
+        context["conversion_rate"] = conversion_rate
+        context["return_percentage"] = return_percentage
+
+        chart_labels = []
+        chart_orders = []
+        chart_sales = []
+        num_days = (end_date - start_date).days + 1
+        for i in range(num_days):
+            day = start_date + timedelta(days=i)
+            day_orders = Order.objects.filter(order_date__date=day)
+            chart_labels.append(day.strftime("%d %b"))
+            chart_orders.append(day_orders.count())
+            chart_sales.append(float(day_orders.aggregate(total=Sum("amount"))["total"] or 0))
+        context["chart_labels"] = chart_labels
+        context["chart_orders"] = chart_orders
+        context["chart_sales"] = chart_sales
+        context["has_trend"] = total_orders > 0
+
+        context["top_products"] = (
+            orders_qs.values("product__name")
+            .annotate(order_count=Count("id"), sales_total=Sum("amount"))
+            .order_by("-order_count")[:5]
+        )
+        return context

@@ -95,6 +95,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
                 "django_adminlte4.context_processors.adminlte",
+                "crud.context_processors.dynamic_usermenu",
             ],
             "loaders": [
                 (
@@ -246,3 +247,4 @@ ADMINLTE = {
     "language_switcher": False,
     "color_mode_toggle": False,
 }
+
