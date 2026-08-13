@@ -9,11 +9,8 @@ from django.db.models.functions import TruncMonth, TruncDate
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-
 from crud.models import Company, Contact, Project, Task
-from shop.models import Order, OrderItem, SiteVisit
-
-
+from crud.models import Order as CrudOrder, Product as CrudProduct, DailyMetric
 class NativeContactForm(forms.ModelForm):
     """A deliberately plain ModelForm — no widget attrs, no crispy helper.
 
@@ -152,7 +149,7 @@ def components_v2(request):
 
 
 def index3(request):
-    """Dashboard v3 — Online Store Overview, wired to real `shop` app data."""
+    """Dashboard v3 — Online Store Overview, wired to real `crud` app data."""
     now = timezone.now()
     today = now.date()
 
@@ -161,57 +158,53 @@ def index3(request):
     prev_week_start = week_start - datetime.timedelta(days=7)
     prev_week_end = week_start - datetime.timedelta(days=1)
 
-    visitors_this_week = SiteVisit.objects.filter(visited_at__date__gte=week_start).count()
-    visitors_last_week = SiteVisit.objects.filter(
-        visited_at__date__gte=prev_week_start, visited_at__date__lte=prev_week_end
-    ).count()
+    visitors_this_week = DailyMetric.objects.filter(date__gte=week_start).aggregate(
+        total=Sum("total_views")
+    )["total"] or 0
+    visitors_last_week = DailyMetric.objects.filter(
+        date__gte=prev_week_start, date__lte=prev_week_end
+    ).aggregate(total=Sum("total_views"))["total"] or 0
 
     visitors_change_pct = (
         round((visitors_this_week - visitors_last_week) * 100 / visitors_last_week, 1)
         if visitors_last_week else 0
     )
 
-    # Daily visitor counts for the last 7 days (for the line chart)
     visitor_days = [week_start + datetime.timedelta(days=i) for i in range(7)]
-    visits_by_day = (
-        SiteVisit.objects.filter(visited_at__date__gte=week_start)
-        .annotate(day=TruncDate("visited_at"))
-        .values("day")
-        .annotate(count=Count("id"))
-    )
-    visits_map = {row["day"]: row["count"] for row in visits_by_day}
+    visits_map = {
+        row["date"]: row["total_views"]
+        for row in DailyMetric.objects.filter(date__gte=week_start).values("date", "total_views")
+    }
     visitors_series_this_week = [visits_map.get(day, 0) for day in visitor_days]
 
     prev_visitor_days = [prev_week_start + datetime.timedelta(days=i) for i in range(7)]
-    prev_visits_by_day = (
-        SiteVisit.objects.filter(visited_at__date__gte=prev_week_start, visited_at__date__lte=prev_week_end)
-        .annotate(day=TruncDate("visited_at"))
-        .values("day")
-        .annotate(count=Count("id"))
-    )
-    prev_visits_map = {row["day"]: row["count"] for row in prev_visits_by_day}
+    prev_visits_map = {
+        row["date"]: row["total_views"]
+        for row in DailyMetric.objects.filter(
+            date__gte=prev_week_start, date__lte=prev_week_end
+        ).values("date", "total_views")
+    }
     visitors_series_last_week = [prev_visits_map.get(day, 0) for day in prev_visitor_days]
 
     # ---------- Sales (this year vs last year) ----------
-    sales_this_year = Order.objects.filter(
-        created_at__year=today.year
-    ).aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    sales_this_year = CrudOrder.objects.filter(
+        order_date__year=today.year
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
 
-    sales_last_year = Order.objects.filter(
-        created_at__year=today.year - 1
-    ).aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    sales_last_year = CrudOrder.objects.filter(
+        order_date__year=today.year - 1
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
 
     sales_change_pct = (
         round(float(sales_this_year - sales_last_year) * 100 / float(sales_last_year), 1)
         if sales_last_year else 0
     )
 
-    # Monthly sales for the current year (for the bar chart)
     monthly_sales = (
-        Order.objects.filter(created_at__year=today.year)
-        .annotate(month=TruncMonth("created_at"))
+        CrudOrder.objects.filter(order_date__year=today.year)
+        .annotate(month=TruncMonth("order_date"))
         .values("month")
-        .annotate(total=Sum("total_amount"))
+        .annotate(total=Sum("amount"))
         .order_by("month")
     )
     sales_categories = [row["month"].strftime("%b") for row in monthly_sales]
@@ -219,15 +212,15 @@ def index3(request):
 
     # ---------- Top products by units sold ----------
     top_products = (
-        OrderItem.objects.values("product__id", "product__name", "product__price")
+        CrudOrder.objects.values("product__id", "product__name", "product__price")
         .annotate(total_sold=Sum("quantity"))
         .order_by("-total_sold")[:4]
     )
 
     # ---------- Simple overview rates ----------
-    total_orders = Order.objects.count()
-    total_customers = Order.objects.values("customer").distinct().count()
-    total_visitors_ever = SiteVisit.objects.count()
+    total_orders = CrudOrder.objects.count()
+    total_customers = CrudOrder.objects.values("customer_name").distinct().count()
+    total_visitors_ever = DailyMetric.objects.aggregate(total=Sum("total_views"))["total"] or 0
 
     conversion_rate = round(total_orders * 100 / total_visitors_ever, 1) if total_visitors_ever else 0
 

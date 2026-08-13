@@ -251,3 +251,26 @@ body { background: var(--crud-bg); }
   border-radius: 8px;
   font-weight: 600;
 }
+.app-sidebar,
+.sidebar-wrapper,
+.main-sidebar {
+  background-color: #000000 !important;
+}
+
+.app-sidebar .nav-link,
+.app-sidebar .brand-link {
+  color: #ffffff !important;
+}
+
+.app-sidebar .nav-link:hover,
+.app-sidebar .nav-link.active {
+  background-color: #1a1a1a !important;
+}
+
+/* --- Fix navbar usermenu dropdown pushing content down --- */
+.app-header .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  left: auto !important;
+}

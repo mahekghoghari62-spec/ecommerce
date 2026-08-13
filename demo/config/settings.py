@@ -84,7 +84,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        'DIRS': [BASE_DIR / 'templates'],
         # Must be False because django-components requires an explicit loaders list.
         "APP_DIRS": False,
         "OPTIONS": {
@@ -233,18 +233,25 @@ ADMINLTE = {
     "usermenu": USERMENU,
     "language_switcher": False,
     "color_mode_toggle": False,
+    'layout_dark_mode': True,
 }
+# --- AdminLTE configuration (mirrors config/adminlte.php and the HTML demo) ---
+from config.menu import ADMINLTE_MENU, NAVBAR_MESSAGES, NAVBAR_NOTIFICATIONS, USERMENU  # noqa: E402
+
 ADMINLTE = {
     "title": "AdminLTE 4 · Django",
     "logo": "<b>Admin</b>LTE",
     "logo_alt_text": "AdminLTE 4",
-    "sidebar_docs_url": None,   # ← આ add કરો
+    "sidebar_docs_url": None,
     "menu": ADMINLTE_MENU,
     "navbar_search": False,
     "navbar_messages": None,
     "navbar_notifications": None,
+    "usermenu_enabled": True,
     "usermenu": USERMENU,
     "language_switcher": False,
     "color_mode_toggle": False,
+    "layout_dark_mode": True,
+    "sidebar_theme": "dark",
+    "classes_topnav_container": "container-fluid d-flex justify-content-between align-items-center",
 }
-
