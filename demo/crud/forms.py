@@ -1,16 +1,58 @@
+import re
+
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Column, Layout, Row, Submit
 from django import forms
 from django.urls import reverse
+from django.utils import timezone
 
-from .models import Advertisement,CatalogUpload, CallbackRequest,Claim, Contact, ImageBulkUpload, Inventory,InfluencerCampaign, Order, Quality, Return, Pricing, Product ,Promotion,Payment,Warehouse
+from .models import (
+    Advertisement, CatalogUpload, CallbackRequest, Claim, Contact,
+    ImageBulkUpload, Inventory, InfluencerCampaign, Order, Quality,
+    Return, Pricing, Product, Promotion, Payment, Warehouse,
+)
+
+
+NAME_RE = re.compile(r"^[A-Za-z\s]+$")
+ALPHANUM_RE = re.compile(r"^[A-Za-z0-9\s\-_&.]+$")
+PHONE_RE = re.compile(r"^\+?[0-9\-\s]{7,15}$")
 
 
 class OrderForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ["customer_name", "customer_email", "product", "quantity", "amount", "status"]
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"min": 1, "step": 1}),
+            "amount": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
+        }
+
+    def clean_customer_name(self):
+        name = self.cleaned_data.get("customer_name", "").strip()
+        if not name:
+            raise forms.ValidationError("Customer name is required.")
+        if not NAME_RE.match(name):
+            raise forms.ValidationError("Customer name can only contain letters and spaces.")
+        return name
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get("quantity")
+        if quantity is None or quantity < 1:
+            raise forms.ValidationError("Quantity must be at least 1.")
+        return quantity
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+        if amount is None or amount <= 0:
+            raise forms.ValidationError("Amount must be greater than 0.")
+        return amount
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,6 +85,14 @@ class ContactForm(forms.ModelForm):
         model = Contact
         fields = ["name", "email", "role", "status"]
 
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "").strip()
+        if not name:
+            raise forms.ValidationError("Name is required.")
+        if not NAME_RE.match(name):
+            raise forms.ValidationError("Name can only contain letters and spaces.")
+        return name
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -73,6 +123,12 @@ class ReturnForm(forms.ModelForm):
             "comments": forms.Textarea(attrs={"rows": 3}),
         }
 
+    def clean_order(self):
+        order = self.cleaned_data.get("order")
+        if not order:
+            raise forms.ValidationError("Please select an order.")
+        return order
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -101,7 +157,42 @@ class PricingForm(forms.ModelForm):
         fields = ["product", "cost_price", "selling_price", "discount_percent", "status", "effective_date"]
         widgets = {
             "effective_date": forms.DateInput(attrs={"type": "date"}),
+            "cost_price": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
+            "selling_price": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
+            "discount_percent": forms.NumberInput(attrs={"min": 0, "max": 100, "step": 0.01}),
         }
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
+
+    def clean_cost_price(self):
+        cost_price = self.cleaned_data.get("cost_price")
+        if cost_price is None or cost_price <= 0:
+            raise forms.ValidationError("Cost price must be greater than 0.")
+        return cost_price
+
+    def clean_selling_price(self):
+        selling_price = self.cleaned_data.get("selling_price")
+        if selling_price is None or selling_price <= 0:
+            raise forms.ValidationError("Selling price must be greater than 0.")
+        return selling_price
+
+    def clean_discount_percent(self):
+        discount = self.cleaned_data.get("discount_percent")
+        if discount is None or discount < 0 or discount > 100:
+            raise forms.ValidationError("Discount percent must be between 0 and 100.")
+        return discount
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cost_price = cleaned_data.get("cost_price")
+        selling_price = cleaned_data.get("selling_price")
+        if cost_price and selling_price and selling_price < cost_price:
+            self.add_error("selling_price", "Selling price should not be lower than cost price.")
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,7 +226,20 @@ class ClaimForm(forms.ModelForm):
         fields = ["order", "claim_type", "status", "claim_amount", "description"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
+            "claim_amount": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
         }
+
+    def clean_order(self):
+        order = self.cleaned_data.get("order")
+        if not order:
+            raise forms.ValidationError("Please select an order.")
+        return order
+
+    def clean_claim_amount(self):
+        amount = self.cleaned_data.get("claim_amount")
+        if amount is None or amount <= 0:
+            raise forms.ValidationError("Claim amount must be greater than 0.")
+        return amount
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -166,7 +270,33 @@ class InventoryForm(forms.ModelForm):
         fields = ["product", "quantity", "reorder_level", "warehouse", "status", "last_restocked"]
         widgets = {
             "last_restocked": forms.DateInput(attrs={"type": "date"}),
+            "quantity": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "reorder_level": forms.NumberInput(attrs={"min": 0, "step": 1}),
         }
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get("quantity")
+        if quantity is None or quantity < 0:
+            raise forms.ValidationError("Quantity cannot be negative.")
+        return quantity
+
+    def clean_reorder_level(self):
+        reorder_level = self.cleaned_data.get("reorder_level")
+        if reorder_level is None or reorder_level < 0:
+            raise forms.ValidationError("Reorder level cannot be negative.")
+        return reorder_level
+
+    def clean_last_restocked(self):
+        last_restocked = self.cleaned_data.get("last_restocked")
+        if last_restocked and last_restocked > timezone.now().date():
+            raise forms.ValidationError("Last restocked date cannot be in the future.")
+        return last_restocked
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -174,7 +304,7 @@ class InventoryForm(forms.ModelForm):
         self.helper.layout = Layout(
             Row(
                 Column("product", css_class="col-md-6"),
-                Column("warehouse_location", css_class="col-md-6"),
+                Column("warehouse", css_class="col-md-6"),
             ),
             Row(
                 Column("quantity", css_class="col-md-4"),
@@ -193,6 +323,7 @@ class InventoryForm(forms.ModelForm):
             ),
         )
 
+
 class CatalogUploadForm(forms.ModelForm):
     class Meta:
         model = CatalogUpload
@@ -200,6 +331,18 @@ class CatalogUploadForm(forms.ModelForm):
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def clean_file_name(self):
+        file_name = self.cleaned_data.get("file_name", "").strip()
+        if not file_name:
+            raise forms.ValidationError("File name is required.")
+        return file_name
+
+    def clean_file(self):
+        file = self.cleaned_data.get("file")
+        if file and not file.name.lower().endswith((".csv", ".xlsx", ".xls")):
+            raise forms.ValidationError("Only CSV or Excel files (.csv, .xlsx, .xls) are allowed.")
+        return file
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -223,10 +366,33 @@ class CatalogUploadForm(forms.ModelForm):
                 ),
             ),
         )
+
+
 class ImageBulkUploadForm(forms.ModelForm):
     class Meta:
         model = ImageBulkUpload
         fields = ["name", "zip_file", "status", "total_images"]
+        widgets = {
+            "total_images": forms.NumberInput(attrs={"min": 0, "step": 1}),
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "").strip()
+        if not name:
+            raise forms.ValidationError("Name is required.")
+        return name
+
+    def clean_zip_file(self):
+        zip_file = self.cleaned_data.get("zip_file")
+        if zip_file and not zip_file.name.lower().endswith(".zip"):
+            raise forms.ValidationError("Only .zip files are allowed.")
+        return zip_file
+
+    def clean_total_images(self):
+        total_images = self.cleaned_data.get("total_images")
+        if total_images is not None and total_images < 0:
+            raise forms.ValidationError("Total images cannot be negative.")
+        return total_images
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -255,7 +421,40 @@ class QualityForm(forms.ModelForm):
         widgets = {
             "inspection_date": forms.DateInput(attrs={"type": "date"}),
             "remarks": forms.Textarea(attrs={"rows": 3}),
+            "defect_count": forms.NumberInput(attrs={"min": 0, "step": 1}),
         }
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
+
+    def clean_batch_number(self):
+        batch_number = self.cleaned_data.get("batch_number", "").strip()
+        if not batch_number:
+            raise forms.ValidationError("Batch number is required.")
+        return batch_number
+
+    def clean_inspector_name(self):
+        inspector_name = self.cleaned_data.get("inspector_name", "").strip()
+        if not inspector_name:
+            raise forms.ValidationError("Inspector name is required.")
+        if not NAME_RE.match(inspector_name):
+            raise forms.ValidationError("Inspector name can only contain letters and spaces.")
+        return inspector_name
+
+    def clean_defect_count(self):
+        defect_count = self.cleaned_data.get("defect_count")
+        if defect_count is None or defect_count < 0:
+            raise forms.ValidationError("Defect count cannot be negative.")
+        return defect_count
+
+    def clean_inspection_date(self):
+        inspection_date = self.cleaned_data.get("inspection_date")
+        if inspection_date and inspection_date > timezone.now().date():
+            raise forms.ValidationError("Inspection date cannot be in the future.")
+        return inspection_date
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -283,13 +482,36 @@ class QualityForm(forms.ModelForm):
             ),
         )
 
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ["name", "category", "price", "gst_percent", "image", "status", "description"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
+            "price": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
+            "gst_percent": forms.NumberInput(attrs={"min": 0, "max": 100, "step": 0.01}),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "").strip()
+        if not name:
+            raise forms.ValidationError("Product name is required.")
+        if not ALPHANUM_RE.match(name):
+            raise forms.ValidationError("Product name contains invalid characters.")
+        return name
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is None or price <= 0:
+            raise forms.ValidationError("Price must be greater than 0.")
+        return price
+
+    def clean_gst_percent(self):
+        gst = self.cleaned_data.get("gst_percent")
+        if gst is None or gst < 0 or gst > 100:
+            raise forms.ValidationError("GST percent must be between 0 and 100.")
+        return gst
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -318,6 +540,8 @@ class ProductForm(forms.ModelForm):
                 ),
             ),
         )
+
+
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
@@ -325,7 +549,40 @@ class PaymentForm(forms.ModelForm):
         widgets = {
             "payment_date": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "notes": forms.Textarea(attrs={"rows": 3}),
+            "amount": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
         }
+
+    def clean_order(self):
+        order = self.cleaned_data.get("order")
+        if not order:
+            raise forms.ValidationError("Please select an order.")
+        return order
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+        if amount is None or amount <= 0:
+            raise forms.ValidationError("Amount must be greater than 0.")
+        return amount
+
+    def clean_payment_date(self):
+        payment_date = self.cleaned_data.get("payment_date")
+        if payment_date and payment_date > timezone.now():
+            raise forms.ValidationError("Payment date cannot be in the future.")
+        return payment_date
+
+    def clean_transaction_id(self):
+        txn_id = self.cleaned_data.get("transaction_id", "").strip()
+        if txn_id and not re.match(r"^[A-Za-z0-9\-_]+$", txn_id):
+            raise forms.ValidationError("Transaction ID can only contain letters, numbers, hyphens and underscores.")
+        return txn_id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        amount = cleaned_data.get("amount")
+        order = cleaned_data.get("order")
+        if amount and order and amount > order.amount:
+            raise forms.ValidationError(f"Payment amount cannot exceed the order amount (${order.amount}).")
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -352,13 +609,46 @@ class PaymentForm(forms.ModelForm):
                 ),
             ),
         )
+
+
 class WarehouseForm(forms.ModelForm):
     class Meta:
         model = Warehouse
         fields = ["name", "location", "address", "capacity", "manager_name", "contact_number", "status"]
         widgets = {
             "address": forms.Textarea(attrs={"rows": 2}),
+            "capacity": forms.NumberInput(attrs={"min": 0, "step": 1}),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "").strip()
+        if not name:
+            raise forms.ValidationError("Warehouse name is required.")
+        return name
+
+    def clean_location(self):
+        location = self.cleaned_data.get("location", "").strip()
+        if not location:
+            raise forms.ValidationError("Location is required.")
+        return location
+
+    def clean_capacity(self):
+        capacity = self.cleaned_data.get("capacity")
+        if capacity is not None and capacity < 0:
+            raise forms.ValidationError("Capacity cannot be negative.")
+        return capacity
+
+    def clean_manager_name(self):
+        manager_name = self.cleaned_data.get("manager_name", "").strip()
+        if manager_name and not NAME_RE.match(manager_name):
+            raise forms.ValidationError("Manager name can only contain letters and spaces.")
+        return manager_name
+
+    def clean_contact_number(self):
+        contact_number = self.cleaned_data.get("contact_number", "").strip()
+        if contact_number and not PHONE_RE.match(contact_number):
+            raise forms.ValidationError("Enter a valid contact number.")
+        return contact_number
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -385,6 +675,8 @@ class WarehouseForm(forms.ModelForm):
                 ),
             ),
         )
+
+
 class InfluencerCampaignForm(forms.ModelForm):
     class Meta:
         model = InfluencerCampaign
@@ -393,7 +685,47 @@ class InfluencerCampaignForm(forms.ModelForm):
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "end_date": forms.DateInput(attrs={"type": "date"}),
+            "followers": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "budget": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
         }
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
+
+    def clean_influencer_name(self):
+        name = self.cleaned_data.get("influencer_name", "").strip()
+        if not name:
+            raise forms.ValidationError("Influencer name is required.")
+        return name
+
+    def clean_campaign_name(self):
+        name = self.cleaned_data.get("campaign_name", "").strip()
+        if not name:
+            raise forms.ValidationError("Campaign name is required.")
+        return name
+
+    def clean_followers(self):
+        followers = self.cleaned_data.get("followers")
+        if followers is not None and followers < 0:
+            raise forms.ValidationError("Followers cannot be negative.")
+        return followers
+
+    def clean_budget(self):
+        budget = self.cleaned_data.get("budget")
+        if budget is None or budget <= 0:
+            raise forms.ValidationError("Budget must be greater than 0.")
+        return budget
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        if start_date and end_date and end_date < start_date:
+            self.add_error("end_date", "End date cannot be before start date.")
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -427,6 +759,8 @@ class InfluencerCampaignForm(forms.ModelForm):
                 ),
             ),
         )
+
+
 class AdvertisementForm(forms.ModelForm):
     class Meta:
         model = Advertisement
@@ -434,7 +768,59 @@ class AdvertisementForm(forms.ModelForm):
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "end_date": forms.DateInput(attrs={"type": "date"}),
+            "budget": forms.NumberInput(attrs={"min": 0.01, "step": 0.01}),
+            "spent": forms.NumberInput(attrs={"min": 0, "step": 0.01}),
+            "clicks": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "impressions": forms.NumberInput(attrs={"min": 0, "step": 1}),
         }
+
+    def clean_campaign_name(self):
+        name = self.cleaned_data.get("campaign_name", "").strip()
+        if not name:
+            raise forms.ValidationError("Campaign name is required.")
+        return name
+
+    def clean_product(self):
+        product = self.cleaned_data.get("product")
+        if not product:
+            raise forms.ValidationError("Please select a product.")
+        return product
+
+    def clean_budget(self):
+        budget = self.cleaned_data.get("budget")
+        if budget is None or budget <= 0:
+            raise forms.ValidationError("Budget must be greater than 0.")
+        return budget
+
+    def clean_spent(self):
+        spent = self.cleaned_data.get("spent")
+        if spent is not None and spent < 0:
+            raise forms.ValidationError("Spent cannot be negative.")
+        return spent
+
+    def clean_clicks(self):
+        clicks = self.cleaned_data.get("clicks")
+        if clicks is not None and clicks < 0:
+            raise forms.ValidationError("Clicks cannot be negative.")
+        return clicks
+
+    def clean_impressions(self):
+        impressions = self.cleaned_data.get("impressions")
+        if impressions is not None and impressions < 0:
+            raise forms.ValidationError("Impressions cannot be negative.")
+        return impressions
+
+    def clean(self):
+        cleaned_data = super().clean()
+        budget = cleaned_data.get("budget")
+        spent = cleaned_data.get("spent")
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        if budget and spent and spent > budget:
+            self.add_error("spent", "Spent cannot exceed the budget.")
+        if start_date and end_date and end_date < start_date:
+            self.add_error("end_date", "End date cannot be before start date.")
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -468,15 +854,38 @@ class AdvertisementForm(forms.ModelForm):
             ),
         )
 
+
 class InventoryBulkStockUploadForm(forms.Form):
     file = forms.FileField(
         label="Stock file (CSV)",
         widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".csv"}),
     )
+
+    def clean_file(self):
+        file = self.cleaned_data.get("file")
+        if file and not file.name.lower().endswith(".csv"):
+            raise forms.ValidationError("Only .csv files are allowed.")
+        return file
+
+
 class CallbackRequestForm(forms.ModelForm):
     class Meta:
         model = CallbackRequest
         fields = ["email", "account_name", "mobile_number", "panel_url"]
+
+    def clean_account_name(self):
+        account_name = self.cleaned_data.get("account_name", "").strip()
+        if not account_name:
+            raise forms.ValidationError("Account name is required.")
+        return account_name
+
+    def clean_mobile_number(self):
+        mobile_number = self.cleaned_data.get("mobile_number", "").strip()
+        if not mobile_number:
+            raise forms.ValidationError("Mobile number is required.")
+        if not re.match(r"^\+?[0-9]{10,13}$", mobile_number):
+            raise forms.ValidationError("Enter a valid mobile number (10-13 digits).")
+        return mobile_number
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -490,6 +899,8 @@ class CallbackRequestForm(forms.ModelForm):
                 Submit("save", "Submit", css_class="btn-primary"),
             ),
         )
+
+
 class PromotionForm(forms.ModelForm):
     class Meta:
         model = Promotion
@@ -502,7 +913,47 @@ class PromotionForm(forms.ModelForm):
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "end_date": forms.DateInput(attrs={"type": "date"}),
             "last_day_to_join": forms.DateInput(attrs={"type": "date"}),
+            "orders_multiplier": forms.NumberInput(attrs={"min": 0, "step": 0.01}),
+            "views_multiplier": forms.NumberInput(attrs={"min": 0, "step": 0.01}),
+            "expected_customers_crores": forms.NumberInput(attrs={"min": 0, "step": 0.01}),
         }
+
+    def clean_event_name(self):
+        event_name = self.cleaned_data.get("event_name", "").strip()
+        if not event_name:
+            raise forms.ValidationError("Event name is required.")
+        return event_name
+
+    def clean_orders_multiplier(self):
+        value = self.cleaned_data.get("orders_multiplier")
+        if value is not None and value < 0:
+            raise forms.ValidationError("Orders multiplier cannot be negative.")
+        return value
+
+    def clean_views_multiplier(self):
+        value = self.cleaned_data.get("views_multiplier")
+        if value is not None and value < 0:
+            raise forms.ValidationError("Views multiplier cannot be negative.")
+        return value
+
+    def clean_expected_customers_crores(self):
+        value = self.cleaned_data.get("expected_customers_crores")
+        if value is not None and value < 0:
+            raise forms.ValidationError("Expected customers cannot be negative.")
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        last_day_to_join = cleaned_data.get("last_day_to_join")
+        if start_date and end_date and end_date < start_date:
+            self.add_error("end_date", "End date cannot be before start date.")
+        if start_date and last_day_to_join and last_day_to_join < start_date:
+            self.add_error("last_day_to_join", "Last day to join cannot be before start date.")
+        if end_date and last_day_to_join and last_day_to_join > end_date:
+            self.add_error("last_day_to_join", "Last day to join cannot be after end date.")
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -274,3 +274,10 @@ body { background: var(--crud-bg); }
   right: 0 !important;
   left: auto !important;
 }
+/* --- Invalid field styling --- */
+.is-invalid {
+  border-color: #dc2626 !important;
+}
+.custom-invalid-feedback {
+  display: block;
+}

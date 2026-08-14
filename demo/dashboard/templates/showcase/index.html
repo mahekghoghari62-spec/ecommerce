@@ -16,9 +16,9 @@
                 <!--begin::Small Box Widget 1-->
                 <div class="small-box text-bg-primary">
                   <div class="inner">
-                    <h3>{{ stats.projects_active }}</h3>
+                    <h3>{{ stats.total_orders }}</h3>
 
-                    <p>Active Projects</p>
+                    <p>Total Orders</p>
                   </div>
                   <svg
                     class="small-box-icon"
@@ -32,7 +32,7 @@
                     ></path>
                   </svg>
                   <a
-                    href="{% url 'crud:project_list' %}"
+                    href="{% url 'crud:order_list' %}"
                     class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
                   >
                     More info <i class="bi bi-link-45deg"></i>
@@ -43,11 +43,11 @@
               <!--end::Col-->
               <div class="col-lg-3 col-6">
                 <!--begin::Small Box Widget 2-->
-                <div class="small-box text-bg-success">
+                <div class="small-box text-bg-warning">
                   <div class="inner">
-                    <h3>{{ stats.tasks_done_pct }}<sup class="fs-5">%</sup></h3>
+                    <h3>{{ stats.pending_orders }}</h3>
 
-                    <p>Tasks Completed</p>
+                    <p>Pending Orders</p>
                   </div>
                   <svg
                     class="small-box-icon"
@@ -57,12 +57,14 @@
                     aria-hidden="true"
                   >
                     <path
-                      d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z"
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
                     ></path>
                   </svg>
                   <a
-                    href="{% url 'crud:project_list' %}"
-                    class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
+                    href="{% url 'crud:order_list' %}?status=pending"
+                    class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover"
                   >
                     More info <i class="bi bi-link-45deg"></i>
                   </a>
@@ -72,11 +74,11 @@
               <!--end::Col-->
               <div class="col-lg-3 col-6">
                 <!--begin::Small Box Widget 3-->
-                <div class="small-box text-bg-warning">
+                <div class="small-box text-bg-success">
                   <div class="inner">
-                    <h3>{{ stats.contacts }}</h3>
+                    <h3>{{ stats.total_products }}</h3>
 
-                    <p>Contacts</p>
+                    <p>Products</p>
                   </div>
                   <svg
                     class="small-box-icon"
@@ -86,12 +88,14 @@
                     aria-hidden="true"
                   >
                     <path
-                      d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z"
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M11.25 4.5l7.5 4.334v8.332l-7.5 4.334-7.5-4.334V8.834L11.25 4.5zm0 2.598L5.25 10.5v6l6 3.469 6-3.469v-6l-6-3.402z"
                     ></path>
                   </svg>
                   <a
-                    href="{% url 'crud:contact_list' %}"
-                    class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover"
+                    href="{% url 'crud:product_list' %}"
+                    class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
                   >
                     More info <i class="bi bi-link-45deg"></i>
                   </a>
@@ -103,9 +107,9 @@
                 <!--begin::Small Box Widget 4-->
                 <div class="small-box text-bg-danger">
                   <div class="inner">
-                    <h3>{{ stats.companies }}</h3>
+                    <h3>{{ stats.total_customers }}</h3>
 
-                    <p>Companies</p>
+                    <p>Customers</p>
                   </div>
                   <svg
                     class="small-box-icon"
@@ -115,18 +119,11 @@
                     aria-hidden="true"
                   >
                     <path
-                      clip-rule="evenodd"
-                      fill-rule="evenodd"
-                      d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z"
-                    ></path>
-                    <path
-                      clip-rule="evenodd"
-                      fill-rule="evenodd"
-                      d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z"
+                      d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122z"
                     ></path>
                   </svg>
                   <a
-                    href="{% url 'admin:crud_company_changelist' %}"
+                    href="{% url 'crud:order_list' %}"
                     class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
                   >
                     More info <i class="bi bi-link-45deg"></i>
@@ -515,102 +512,45 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
     <!-- jsvectormap -->
-
-    <!-- jsvectormap -->
     <script>
 document.addEventListener("DOMContentLoaded", function () {
   adminlteUse("jsvectormap", "apexcharts").then(function () {
-      // World map by jsVectorMap
-      new jsVectorMap({
-        selector: '#world-map',
-        map: 'world',
+    // Real data: order-count-by-country (world map) and 9-day sparklines
+    // (Visitors / Online / Sales), served by dashboard_sales_widget
+    // (see dashboard/views.py).
+    fetch("{% url 'dashboard_sales_widget' %}")
+      .then((response) => response.json())
+      .then((data) => {
+        // World map by jsVectorMap — colored by real order count per country
+        new jsVectorMap({
+          selector: '#world-map',
+          map: 'world',
+          series: {
+            regions: [
+              {
+                values: data.map_values,
+                scale: ['#c8d9ea', '#0d6efd'],
+                normalizeFunction: 'polynomial',
+              },
+            ],
+          },
+        });
+
+        function renderSparkline(selector, values, color) {
+          new ApexCharts(document.querySelector(selector), {
+            series: [{ data: values }],
+            chart: { type: 'area', height: 50, sparkline: { enabled: true } },
+            stroke: { curve: 'straight' },
+            fill: { opacity: 0.3 },
+            yaxis: { min: 0 },
+            colors: [color],
+          }).render();
+        }
+
+        renderSparkline('#sparkline-1', data.sparkline_visitors, '#DCE6EC');
+        renderSparkline('#sparkline-2', data.sparkline_online, '#DCE6EC');
+        renderSparkline('#sparkline-3', data.sparkline_sales, '#DCE6EC');
       });
-
-      // Sparkline charts
-      const option_sparkline1 = {
-        series: [
-          {
-            data: [1000, 1200, 920, 927, 931, 1027, 819, 930, 1021],
-          },
-        ],
-        chart: {
-          type: 'area',
-          height: 50,
-          sparkline: {
-            enabled: true,
-          },
-        },
-        stroke: {
-          curve: 'straight',
-        },
-        fill: {
-          opacity: 0.3,
-        },
-        yaxis: {
-          min: 0,
-        },
-        colors: ['#DCE6EC'],
-      };
-
-      const sparkline1 = new ApexCharts(document.querySelector('#sparkline-1'), option_sparkline1);
-      sparkline1.render();
-
-      const option_sparkline2 = {
-        series: [
-          {
-            data: [515, 519, 520, 522, 652, 810, 370, 627, 319, 630, 921],
-          },
-        ],
-        chart: {
-          type: 'area',
-          height: 50,
-          sparkline: {
-            enabled: true,
-          },
-        },
-        stroke: {
-          curve: 'straight',
-        },
-        fill: {
-          opacity: 0.3,
-        },
-        yaxis: {
-          min: 0,
-        },
-        colors: ['#DCE6EC'],
-      };
-
-      const sparkline2 = new ApexCharts(document.querySelector('#sparkline-2'), option_sparkline2);
-      sparkline2.render();
-
-      const option_sparkline3 = {
-        series: [
-          {
-            data: [15, 19, 20, 22, 33, 27, 31, 27, 19, 30, 21],
-          },
-        ],
-        chart: {
-          type: 'area',
-          height: 50,
-          sparkline: {
-            enabled: true,
-          },
-        },
-        stroke: {
-          curve: 'straight',
-        },
-        fill: {
-          opacity: 0.3,
-        },
-        yaxis: {
-          min: 0,
-        },
-        colors: ['#DCE6EC'],
-      };
-
-      const sparkline3 = new ApexCharts(document.querySelector('#sparkline-3'), option_sparkline3);
-      sparkline3.render();
-    
   });
 });
 </script>

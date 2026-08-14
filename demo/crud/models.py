@@ -234,6 +234,8 @@ class Pricing(models.Model):
         if self.cost_price and self.cost_price > 0:
             return round(((self.selling_price - self.cost_price) / self.cost_price) * 100, 2)
         return 0
+    def __str__(self):
+        return self.product.name
 class Claim(models.Model):
     TYPE_CHOICES = [
         ("damaged", "Damaged Product"),

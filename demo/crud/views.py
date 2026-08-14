@@ -153,7 +153,11 @@ class ReturnListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_pagination = {"per_page": 10}
 
     def get_queryset(self):
-        return super().get_queryset().select_related("order")
+        qs = super().get_queryset().select_related("order")
+        tab = self.request.GET.get("tab", "")
+        if tab in ("requested", "approved", "picked_up", "refunded", "rejected"):
+            qs = qs.filter(status=tab)
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -165,8 +169,18 @@ class ReturnListView(LoginRequiredMixin, SingleTableMixin, FilterView):
         context["picked_up_count"] = all_returns.filter(status="picked_up").count()
         context["refunded_count"] = all_returns.filter(status="refunded").count()
 
+        tab_param = self.request.GET.get("tab", "")
+        context["show_claim_tracking"] = tab_param == "claims"
+        context["show_return_tracking"] = tab_param != "" and tab_param != "claims"
+        context["active_tab"] = tab_param
+
         all_claims = Claim.objects.select_related("order")
-        context["claim_table"] = ClaimTable(all_claims)
+        claim_tab = self.request.GET.get("claim_tab", "all")
+        context["active_claim_tab"] = claim_tab
+        filtered_claims = all_claims
+        if claim_tab in ("open", "under_review", "approved", "rejected", "settled"):
+            filtered_claims = all_claims.filter(status=claim_tab)
+        context["claim_table"] = ClaimTable(filtered_claims)
         context["total_claims"] = all_claims.count()
         context["open_claims_count"] = all_claims.filter(status="open").count()
         context["under_review_claims_count"] = all_claims.filter(status="under_review").count()
@@ -174,7 +188,6 @@ class ReturnListView(LoginRequiredMixin, SingleTableMixin, FilterView):
         context["rejected_claims_count"] = all_claims.filter(status="rejected").count()
         context["settled_claims_count"] = all_claims.filter(status="settled").count()
         return context
-
 
 class ReturnCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
     model = Return

@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
-
+from crud.models import Company, Contact, Project, Task
+from crud.models import Order as CrudOrder, Product as CrudProduct, Warehouse as CrudWarehouse, Payment as CrudPayment, DailyMetric
 from django import forms
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -33,27 +34,10 @@ def native_form(request):
         return redirect("native_form")
     return render(request, "showcase/native/form.html", {"form": form})
 
-
-def index(request):
-    """Dashboard v1 — the small boxes and the activity chart are fed by the
-    demo's own relational dataset (``manage.py seed_demo``), not static markup."""
-    tasks_total = Task.objects.count()
-    tasks_done = Task.objects.filter(status="done").count()
-    stats = {
-        "projects_active": Project.objects.filter(status="active").count(),
-        "tasks_done_pct": round(tasks_done * 100 / tasks_total) if tasks_total else 0,
-        "contacts": Contact.objects.count(),
-        "companies": Company.objects.count(),
-    }
-    return render(request, "showcase/index.html", {"stats": stats})
-
-
 def dashboard_activity(request):
-    """JSON for the Dashboard v1 area chart: six months of projects started and
-    tasks completed (by due month), aggregated in the database."""
+    """JSON for the Dashboard v1 area chart: six months of orders placed and
+    payments completed (by month), aggregated in the database."""
     today = datetime.date.today()
-    # Calendar month arithmetic — stepping by timedelta(days=31) skips or
-    # duplicates months depending on the current date.
     total = today.year * 12 + today.month - 1
     months = [
         datetime.date((total - offset) // 12, (total - offset) % 12 + 1, 1)
@@ -74,11 +58,22 @@ def dashboard_activity(request):
         {
             "categories": [month.isoformat() for month in months],
             "series": [
-                {"name": "Projects started", "data": per_month(Project.objects, "start_date")},
-                {"name": "Tasks completed", "data": per_month(Task.objects.filter(status="done"), "due_date")},
+                {"name": "Orders placed", "data": per_month(CrudOrder.objects, "order_date")},
+                {"name": "Payments completed", "data": per_month(CrudPayment.objects.filter(status="completed"), "payment_date")},
             ],
         }
     )
+
+def index(request):
+    """Dashboard v1 — small boxes ecommerce data thi (crud app), demo's
+    real relational dataset (``manage.py seed_demo``) parthi."""
+    stats = {
+        "total_orders": CrudOrder.objects.count(),
+        "pending_orders": CrudOrder.objects.filter(status="pending").count(),
+        "total_products": CrudProduct.objects.count(),
+        "total_customers": CrudOrder.objects.values("customer_name").distinct().count(),
+    }
+    return render(request, "showcase/index.html", {"stats": stats})
 
 
 def native_demo(request):
@@ -243,3 +238,71 @@ def index3(request):
         "total_customers": total_customers,
     }
     return render(request, "showcase/index3.html", context)
+# Country name -> ISO2 code, jsVectorMap 'world' region keys માટે.
+# List ma tamara data ma je countries hoy e badha add karo — jo naam
+# ahi map ma na hoy to e country map par count nahi thay.
+COUNTRY_NAME_TO_ISO2 = {
+    "India": "IN", "United States": "US", "USA": "US", "United Kingdom": "GB",
+    "UK": "GB", "Canada": "CA", "Australia": "AU", "Germany": "DE", "France": "FR",
+    "China": "CN", "Japan": "JP", "Brazil": "BR", "Russia": "RU",
+    "South Africa": "ZA", "UAE": "AE", "United Arab Emirates": "AE",
+    "Singapore": "SG", "Nepal": "NP", "Bangladesh": "BD", "Sri Lanka": "LK",
+    "Pakistan": "PK", "Italy": "IT", "Spain": "ES", "Netherlands": "NL",
+    "Mexico": "MX", "Indonesia": "ID", "Malaysia": "MY", "Thailand": "TH",
+    "South Korea": "KR", "Saudi Arabia": "SA", "New Zealand": "NZ",
+}
+
+
+def dashboard_sales_widget(request):
+    """JSON for the Sales Value card: world map (orders by country) +
+    3 sparklines — Visitors (DailyMetric.total_views), Online (daily
+    completed payments count), Sales (daily order count)."""
+    today = timezone.now().date()
+    days = [today - datetime.timedelta(days=i) for i in range(8, -1, -1)]  # last 9 days
+
+    # ---- World map: order count by country ----
+    country_counts = (
+        CrudOrder.objects.exclude(country__isnull=True)
+        .exclude(country__exact="")
+        .values("country")
+        .annotate(count=Count("id"))
+    )
+    map_values = {}
+    for row in country_counts:
+        iso = COUNTRY_NAME_TO_ISO2.get(row["country"])
+        if iso:
+            map_values[iso] = map_values.get(iso, 0) + row["count"]
+
+    # ---- Sparkline 1: Visitors ----
+    visits_rows = DailyMetric.objects.filter(date__gte=days[0]).values("date", "total_views")
+    visits_map = {row["date"]: row["total_views"] for row in visits_rows}
+    sparkline_visitors = [visits_map.get(d, 0) for d in days]
+
+    # ---- Sparkline 2: Online = completed payments per day ----
+    payment_rows = (
+        CrudPayment.objects.filter(status="completed", payment_date__gte=days[0])
+        .annotate(day=TruncDate("payment_date"))
+        .values("day")
+        .annotate(count=Count("id"))
+    )
+    payments_map = {row["day"]: row["count"] for row in payment_rows}
+    sparkline_online = [payments_map.get(d, 0) for d in days]
+
+    # ---- Sparkline 3: Sales = orders per day ----
+    order_rows = (
+        CrudOrder.objects.filter(order_date__gte=days[0])
+        .annotate(day=TruncDate("order_date"))
+        .values("day")
+        .annotate(count=Count("id"))
+    )
+    orders_map = {row["day"]: row["count"] for row in order_rows}
+    sparkline_sales = [orders_map.get(d, 0) for d in days]
+
+    return JsonResponse(
+        {
+            "map_values": map_values,
+            "sparkline_visitors": sparkline_visitors,
+            "sparkline_online": sparkline_online,
+            "sparkline_sales": sparkline_sales,
+        }
+    )
