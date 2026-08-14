@@ -54,15 +54,7 @@
         </div>
     </form>
 
-    <hr class="my-3">
-    <p class="mb-2 small text-muted">After signing in, here's how the demo is laid out:</p>
-    <ul class="list-unstyled small mb-0">
-        <li class="mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i><strong>Dashboard</strong> &mdash; AdminLTE layout, pages &amp; components (open to everyone).</li>
-        <li class="mb-1"><i class="bi bi-person-rolodex text-primary me-2"></i><strong>Contacts &amp; Projects</strong> &mdash; relational CRUD over seeded data (sign-in required).</li>
-        <li class="mb-1"><i class="bi bi-shield-lock text-primary me-2"></i><strong><a href="/admin/">Django admin</a></strong> &mdash; same credentials, AdminLTE-themed.</li>
-        <li class="mb-0"><i class="bi bi-box-arrow-in-right text-primary me-2"></i><strong><a href="/accounts/login/">Accounts</a></strong> &mdash; django-allauth login/signup pages.</li>
-    </ul>
-
+    
     {% url 'password_reset' as password_reset_url %}
     {% if password_reset_url %}
         <p class="mb-1 mt-3"><a href="{{ password_reset_url }}">{% trans 'I forgot my password' %}</a></p>
