@@ -120,4 +120,11 @@ urlpatterns = [
     path("instant-cash/", views.InstantCashView.as_view(), name="instant_cash"),
     path("instant-cash/help/", views.InstantCashHelpView.as_view(), name="instant_cash_help"),
     path("business-dashboard/", views.BusinessDashboardView.as_view(), name="business_dashboard"),
+    # Store Reports
+    path("reports/", views.StoreReportsView.as_view(), name="store_reports"),
+    path("reports/sales/excel/", views.SalesReportExcelView.as_view(), name="sales_report_excel"),
+    path("reports/sales/pdf/", views.SalesReportPDFView.as_view(), name="sales_report_pdf"),
+    path("reports/visitors/excel/", views.VisitorsReportExcelView.as_view(), name="visitors_report_excel"),
+    path("reports/visitors/pdf/", views.VisitorsReportPDFView.as_view(), name="visitors_report_pdf"),
+    path("settings/", views.SettingsView.as_view(), name="settings"),
 ]

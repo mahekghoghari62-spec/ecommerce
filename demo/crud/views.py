@@ -20,7 +20,20 @@ from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views import View
 from .forms import InventoryBulkStockUploadForm
-
+import openpyxl
+from openpyxl.utils import get_column_letter
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.urls import reverse
+from shop.models import SupplierProfile
+from .forms import (
+    WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
+    SupplierSignatureForm, EmailNotificationsForm,
+)
 # --- Orders: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class OrderListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     model = Order
@@ -1320,3 +1333,297 @@ class BusinessDashboardView(LoginRequiredMixin, TemplateView):
             .order_by("-order_count")[:5]
         )
         return context
+
+
+class StoreReportsView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/store_reports.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["orders"] = Order.objects.select_related("product").order_by("-order_date")[:20]
+        context["metrics"] = DailyMetric.objects.all().order_by("-date")[:20]
+        return context
+
+# --- Sales Report ---
+class SalesReportExcelView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        orders = Order.objects.select_related("product").order_by("-order_date")
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Sales Report"
+        headers = ["Order Number", "Customer", "Product", "Quantity", "Amount", "Status", "Order Date"]
+        ws.append(headers)
+        for o in orders:
+            ws.append([
+                o.order_number, o.customer_name, o.product.name if o.product else "",
+                o.quantity, float(o.amount), o.get_status_display(),
+                o.order_date.strftime("%Y-%m-%d %H:%M"),
+            ])
+        for i in range(1, len(headers) + 1):
+            ws.column_dimensions[get_column_letter(i)].width = 20
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="sales_report.xlsx"'
+        wb.save(response)
+        return response
+
+
+class SalesReportPDFView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        orders = Order.objects.select_related("product").order_by("-order_date")
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="sales_report.pdf"'
+        doc = SimpleDocTemplate(response, pagesize=A4)
+        styles = getSampleStyleSheet()
+        elements = [Paragraph("Sales Report", styles["Title"]), Spacer(1, 12)]
+
+        data = [["Order #", "Customer", "Product", "Qty", "Amount", "Status", "Date"]]
+        for o in orders:
+            data.append([
+                o.order_number, o.customer_name, o.product.name if o.product else "",
+                str(o.quantity), f"${o.amount}", o.get_status_display(),
+                o.order_date.strftime("%Y-%m-%d"),
+            ])
+        table = Table(data, repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4f46e5")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
+        elements.append(table)
+        doc.build(elements)
+        return response
+
+
+# --- Visitors Report ---
+class VisitorsReportExcelView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        metrics = DailyMetric.objects.all().order_by("-date")
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Visitors Report"
+        headers = ["Date", "Total Views", "Total Clicks"]
+        ws.append(headers)
+        for m in metrics:
+            ws.append([m.date.strftime("%Y-%m-%d"), m.total_views, m.total_clicks])
+        for i in range(1, len(headers) + 1):
+            ws.column_dimensions[get_column_letter(i)].width = 20
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="visitors_report.xlsx"'
+        wb.save(response)
+        return response
+
+
+class VisitorsReportPDFView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        metrics = DailyMetric.objects.all().order_by("-date")
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="visitors_report.pdf"'
+        doc = SimpleDocTemplate(response, pagesize=A4)
+        styles = getSampleStyleSheet()
+        elements = [Paragraph("Online Store Visitors Report", styles["Title"]), Spacer(1, 12)]
+
+        data = [["Date", "Total Views", "Total Clicks"]]
+        for m in metrics:
+            data.append([m.date.strftime("%Y-%m-%d"), str(m.total_views), str(m.total_clicks)])
+        table = Table(data, repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4f46e5")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
+        elements.append(table)
+        doc.build(elements)
+        return response
+# --- Add these imports at the top of crud/views.py (if not already present) ---
+# from django.contrib.auth.forms import PasswordChangeForm
+# from django.contrib.auth import update_session_auth_hash
+# from django.urls import reverse
+# from shop.models import SupplierProfile
+# from .forms import (
+#     WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
+#     SupplierSignatureForm, EmailNotificationsForm,
+# )
+
+
+# --- Settings: append this view to crud/views.py ---
+
+LEGAL_POLICIES = [
+    {"slug": "additional-seller-policies", "title": "Additional Seller Policies"},
+    {"slug": "anti-phishing-policy", "title": "Anti Phishing Policy"},
+    {"slug": "branded-packaging-policy", "title": "Branded Packaging Policy"},
+    {"slug": "fair-usage-policy", "title": "Fair Usage Policy"},
+    {"slug": "intellectual-property-policy", "title": "Intellectual Property Policy"},
+    {"slug": "logistics-policy", "title": "Logistics Policy"},
+    {"slug": "no-pack-program-policy", "title": "No-Pack Program Policy"},
+    {"slug": "privacy-policy", "title": "Privacy Policy"},
+    {"slug": "prohibited-restricted-products", "title": "Prohibited and Restricted Products list"},
+    {"slug": "return-claims-policy", "title": "Return Claims Policy"},
+    {"slug": "seller-agreement", "title": "Seller Agreement"},
+    {"slug": "seller-deactivation-policy", "title": "Seller Deactivation Policy"},
+    {"slug": "seller-referral-policy", "title": "Seller Referral Policy"},
+    {"slug": "courier-partner-preference", "title": "T&Cs - Courier Partner Preference"},
+    {"slug": "terms-and-conditions", "title": "Terms and Conditions"},
+    {"slug": "whistle-blower-policy", "title": "Whistle Blower Policy"},
+]
+
+# Placeholder body content per policy (demo purposes only).
+LEGAL_POLICY_BODY = {
+    "additional-seller-policies": [
+        "This policy outlines the additional obligations sellers agree to when listing products on the platform.",
+        "Sellers must ensure that pricing, product descriptions, and images accurately represent the item being sold.",
+        "The platform reserves the right to review and remove listings that violate marketplace guidelines.",
+    ],
+    "anti-phishing-policy": [
+        "The platform will never ask sellers to share OTPs, passwords, or banking credentials over calls or messages.",
+        "Any communication claiming to be from the platform requesting sensitive information should be treated as suspicious and reported immediately.",
+    ],
+    "branded-packaging-policy": [
+        "Sellers who opt for branded packaging must adhere to size, material, and labeling guidelines provided in the seller dashboard.",
+        "Packaging costs for branded material are borne by the seller unless otherwise stated in a promotional agreement.",
+    ],
+    "fair-usage-policy": [
+        "This policy governs acceptable use of seller tools, bulk upload systems, and promotional credits provided by the platform.",
+        "Any attempt to manipulate ratings, reviews, or order volumes artificially may result in account suspension.",
+    ],
+    "intellectual-property-policy": [
+        "Sellers must only list products they have the legal right to sell and must not infringe on any trademark, copyright, or patent.",
+        "Repeated IP violations may lead to permanent removal from the platform.",
+    ],
+    "logistics-policy": [
+        "This policy covers pickup timelines, packaging standards, and courier partner responsibilities for order fulfillment.",
+        "Sellers are expected to hand over orders within the committed dispatch window to avoid penalties.",
+    ],
+    "no-pack-program-policy": [
+        "Under the No-Pack Program, eligible sellers can ship products without additional packaging, subject to category and courier eligibility.",
+        "Sellers must ensure product safety during transit even without secondary packaging.",
+    ],
+    "privacy-policy": [
+        "This policy describes how seller and customer data is collected, used, and protected across the platform.",
+        "Personal information is never shared with third parties except as required to fulfill orders or comply with law.",
+    ],
+    "prohibited-restricted-products": [
+        "Certain product categories are prohibited or restricted from sale on the platform, including hazardous materials, counterfeit goods, and items requiring special licensing.",
+        "A full category-wise list is available in the seller resource center.",
+    ],
+    "return-claims-policy": [
+        "This policy explains how return claims are raised, reviewed, and resolved between sellers and the platform.",
+        "Sellers can dispute a claim within the specified window by submitting supporting evidence.",
+    ],
+    "seller-agreement": [
+        "This agreement governs the relationship between the seller and the platform, including commission structure, payment cycles, and dispute resolution.",
+        "By continuing to sell on the platform, sellers agree to the terms outlined in this document.",
+    ],
+    "seller-deactivation-policy": [
+        "Accounts may be deactivated for repeated policy violations, poor quality scores, or fraudulent activity.",
+        "Sellers can appeal a deactivation decision by raising a support ticket within 15 days.",
+    ],
+    "seller-referral-policy": [
+        "Sellers who refer new sellers to the platform may be eligible for referral bonuses, subject to the referred seller meeting minimum activity requirements.",
+    ],
+    "courier-partner-preference": [
+        "Sellers can set preferred courier partners for order fulfillment, subject to serviceability in their region.",
+        "The platform may override preferences in case of courier unavailability to ensure timely delivery.",
+    ],
+    "terms-and-conditions": [
+        "These terms and conditions govern seller access and use of the supplier platform.",
+        "Continued use of the platform constitutes acceptance of any updates made to these terms.",
+    ],
+    "whistle-blower-policy": [
+        "This policy provides a confidential channel for sellers and employees to report unethical or fraudulent activity without fear of retaliation.",
+        "All reports are reviewed by an independent compliance team.",
+    ],
+}
+
+
+class SettingsView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/settings.html"
+
+    def get_profile(self):
+        profile, _ = SupplierProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.get_profile()
+
+        context["active_tab"] = self.request.GET.get("tab", "change_password")
+        context["password_form"] = kwargs.get("password_form") or PasswordChangeForm(user=self.request.user)
+        context["whatsapp_form"] = kwargs.get("whatsapp_form") or WhatsAppSettingsForm(instance=profile)
+        context["bank_form"] = kwargs.get("bank_form") or BankDetailsForm(instance=profile)
+        context["tax_form"] = kwargs.get("tax_form") or TaxDetailsForm(instance=profile)
+        context["signature_form"] = kwargs.get("signature_form") or SupplierSignatureForm(instance=profile)
+        context["email_form"] = kwargs.get("email_form") or EmailNotificationsForm(instance=profile)
+
+        # Legal and Policies: list + detail
+        context["legal_policies"] = LEGAL_POLICIES
+        doc_slug = self.request.GET.get("doc")
+        if doc_slug:
+            policy = next((p for p in LEGAL_POLICIES if p["slug"] == doc_slug), None)
+            if policy:
+                context["active_policy"] = policy
+                context["active_policy_body"] = LEGAL_POLICY_BODY.get(doc_slug, [])
+        return context
+
+    def post(self, request, *args, **kwargs):
+        profile = self.get_profile()
+        form_type = request.POST.get("form_type")
+
+        if form_type == "change_password":
+            form = PasswordChangeForm(user=request.user, data=request.POST)
+            if form.is_valid():
+                user = form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Password changed successfully.")
+                return redirect(f"{reverse('crud:settings')}?tab=change_password")
+            return self.render_to_response(self.get_context_data(password_form=form, active_tab="change_password"))
+
+        elif form_type == "whatsapp":
+            form = WhatsAppSettingsForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "WhatsApp notification settings updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=whatsapp")
+            return self.render_to_response(self.get_context_data(whatsapp_form=form, active_tab="whatsapp"))
+
+        elif form_type == "bank":
+            form = BankDetailsForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Bank details updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=bank")
+            return self.render_to_response(self.get_context_data(bank_form=form, active_tab="bank"))
+
+        elif form_type == "tax":
+            form = TaxDetailsForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Tax details updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=tax")
+            return self.render_to_response(self.get_context_data(tax_form=form, active_tab="tax"))
+
+        elif form_type == "signature":
+            form = SupplierSignatureForm(request.POST, request.FILES, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Supplier signature updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=signature")
+            return self.render_to_response(self.get_context_data(signature_form=form, active_tab="signature"))
+
+        elif form_type == "email":
+            form = EmailNotificationsForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Email notification settings updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=email")
+            return self.render_to_response(self.get_context_data(email_form=form, active_tab="email"))
+
+        messages.error(request, "Unknown form submitted.")
+        return redirect("crud:settings")

@@ -1,0 +1,348 @@
+{% extends "adminlte/page.html" %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'index3' %}">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Settings</li>
+{% endblock %}
+
+{% block content %}
+<h2 class="settings-heading">Settings</h2>
+<div class="settings-shell">
+  <div class="settings-side">
+    <div class="settings-menu list-group">
+      <a href="?tab=change_password" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'change_password' %}active{% endif %}">
+        <i class="bi bi-lock me-2"></i>Change Password
+      </a>
+      <a href="?tab=whatsapp" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'whatsapp' %}active{% endif %}">
+        <i class="bi bi-whatsapp me-2"></i>WhatsApp Notifications
+      </a>
+      <a href="?tab=bank" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'bank' %}active{% endif %}">
+        <i class="bi bi-bank me-2"></i>Bank Details
+      </a>
+      <a href="?tab=tax" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'tax' %}active{% endif %}">
+        <i class="bi bi-receipt me-2"></i>Tax Details
+      </a>
+      <a href="?tab=signature" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'signature' %}active{% endif %}">
+        <i class="bi bi-pen me-2"></i>Supplier Signature
+      </a>
+      <a href="?tab=legal" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'legal' %}active{% endif %}">
+        <i class="bi bi-file-earmark-text me-2"></i>Legal and Policies
+      </a>
+      <a href="?tab=email" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'email' %}active{% endif %}">
+        <i class="bi bi-envelope me-2"></i>Email Notifications
+      </a>
+    </div>
+  </div>
+
+  <div class="settings-main">
+    {% if active_tab == 'change_password' %}
+      <h4 class="mb-4">Change Password</h4>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="change_password">
+        {{ password_form.old_password|as_crispy_field }}
+        {{ password_form.new_password1|as_crispy_field }}
+        {{ password_form.new_password2|as_crispy_field }}
+        <ul class="text-secondary small mb-3">
+          <li>Minimum 8 characters</li>
+          <li>1 Capital letter (A-Z)</li>
+          <li>1 Special Character (@#$%!^&amp;*)</li>
+          <li>1 Number</li>
+        </ul>
+        <button type="submit" class="btn btn-primary">Change Password</button>
+      </form>
+
+    {% elif active_tab == 'whatsapp' %}
+      <form method="post" novalidate class="settings-whatsapp-form" id="whatsappSettingsForm">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="whatsapp">
+        <h3 class="settings-whatsapp-title">WhatsApp Notification</h3>
+
+        <div class="settings-whatsapp-state settings-whatsapp-subscribed is-visible" id="whatsappSubscribedState">
+          <div class="settings-whatsapp-status-row">
+            <span class="settings-whatsapp-check"><i class="bi bi-check-circle-fill"></i></span>
+            <span>You are subscribed to Whatsapp notification on this number : 7383065457</span>
+          </div>
+
+          <div class="settings-number-editor" id="whatsappNumberEditor">
+            <label class="settings-number-label" for="id_whatsapp_number">Mobile Number</label>
+            <div class="settings-number-row">
+              {{ whatsapp_form.whatsapp_number }}
+              <button type="submit" class="settings-update-btn" id="updateWhatsappBtn" disabled>Update</button>
+              <button type="button" class="settings-cancel-btn" id="cancelWhatsappEditorBtn">Cancel</button>
+            </div>
+          </div>
+
+          <button type="button" class="settings-change-number-btn" id="showWhatsappEditorBtn">Change Number</button>
+
+          <div class="settings-whatsapp-divider"></div>
+          <div class="settings-unsubscribe-row">
+            <span>Don't need Whatsapp notifications any longer?</span>
+            <button type="button" class="settings-unsubscribe-btn" id="unsubscribeWhatsappBtn">Unsubscribe</button>
+          </div>
+        </div>
+
+        <div class="settings-whatsapp-state settings-whatsapp-unsubscribed" id="whatsappUnsubscribedState">
+          <div class="settings-whatsapp-subscribe-row">
+            <span class="settings-whatsapp-check"><i class="bi bi-whatsapp"></i></span>
+            <span>Receive notification on Whatsapp</span>
+          </div>
+
+          <div class="settings-subscribe-editor">
+            <div class="settings-subscribe-row">
+              <input type="text" id="id_whatsapp_number_unsubscribed" name="whatsapp_number" placeholder="Mobile Number" required maxlength="10" pattern="[6-9][0-9]{9}" inputmode="numeric" title="Enter a valid 10-digit Indian mobile number">
+              <button type="submit" class="settings-subscribe-btn" id="subscribeWhatsappBtn" disabled>Subscribe</button>
+            </div>
+            <div class="settings-validation-error" id="whatsappValidationError"></div>
+          </div>
+        </div>
+      </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const subscribedState = document.getElementById('whatsappSubscribedState');
+          const unsubscribedState = document.getElementById('whatsappUnsubscribedState');
+          const editor = document.getElementById('whatsappNumberEditor');
+          const trigger = document.getElementById('showWhatsappEditorBtn');
+          const cancel = document.getElementById('cancelWhatsappEditorBtn');
+          const unsubscribeBtn = document.getElementById('unsubscribeWhatsappBtn');
+
+          const showSubscribed = function () {
+            if (subscribedState) subscribedState.classList.add('is-visible');
+            if (unsubscribedState) unsubscribedState.classList.remove('is-visible');
+            if (editor) editor.classList.remove('is-visible');
+            if (trigger) trigger.style.display = 'inline-flex';
+          };
+
+          const showUnsubscribed = function () {
+            if (subscribedState) subscribedState.classList.remove('is-visible');
+            if (unsubscribedState) unsubscribedState.classList.add('is-visible');
+          };
+
+          if (unsubscribeBtn) {
+            unsubscribeBtn.addEventListener('click', showUnsubscribed);
+          }
+
+          if (trigger) {
+            trigger.addEventListener('click', function () {
+              if (editor) editor.classList.add('is-visible');
+              trigger.style.display = 'none';
+            });
+          }
+
+          if (cancel) {
+            cancel.addEventListener('click', function () {
+              if (editor) editor.classList.remove('is-visible');
+              if (trigger) trigger.style.display = 'inline-flex';
+            });
+          }
+
+          // Validation for unsubscribed input
+          const unsubscribedInput = document.getElementById('id_whatsapp_number_unsubscribed');
+          const subscribeBtn = document.getElementById('subscribeWhatsappBtn');
+          const validationError = document.getElementById('whatsappValidationError');
+          
+          if (unsubscribedInput && validationError && subscribeBtn) {
+            const isValidNumber = function (value) {
+              value = value.trim();
+              if (!value) return false;
+              if (!/^[0-9]{10}$/.test(value)) return false;
+              if (!/^[6-9]/.test(value)) return false;
+              return true;
+            };
+            
+            const validateNumber = function () {
+              const value = unsubscribedInput.value.trim();
+              validationError.style.display = 'none';
+              validationError.textContent = '';
+              
+              if (!value) {
+                subscribeBtn.disabled = true;
+                return false;
+              }
+              
+              if (!/^[0-9]{10}$/.test(value)) {
+                validationError.textContent = 'Enter exactly 10 digits';
+                validationError.style.display = 'block';
+                subscribeBtn.disabled = true;
+                return false;
+              }
+              if (!/^[6-9]/.test(value)) {
+                validationError.textContent = 'Indian mobile number must start with 6-9';
+                validationError.style.display = 'block';
+                subscribeBtn.disabled = true;
+                return false;
+              }
+              subscribeBtn.disabled = false;
+              return true;
+            };
+            
+            unsubscribedInput.addEventListener('input', validateNumber);
+            unsubscribedInput.addEventListener('blur', validateNumber);
+            
+            // Also validate on form submit
+            const form = document.getElementById('whatsappSettingsForm');
+            if (form) {
+              form.addEventListener('submit', function (e) {
+                if (unsubscribedState && unsubscribedState.classList.contains('is-visible')) {
+                  if (!isValidNumber(unsubscribedInput.value)) {
+                    if (!unsubscribedInput.value.trim()) {
+                      validationError.textContent = 'Mobile number is required';
+                    }
+                    validationError.style.display = 'block';
+                    e.preventDefault();
+                    return;
+                  }
+                }
+              });
+            }
+          }
+
+          // Validation for editor input
+          const editorInput = document.querySelector('.settings-number-editor input[name="whatsapp_number"]');
+          const updateBtn = document.getElementById('updateWhatsappBtn');
+          
+          if (editorInput && updateBtn) {
+            const isValidEditorNumber = function (value) {
+              value = value.trim();
+              if (!value) return false;
+              if (!/^[0-9]{10}$/.test(value)) return false;
+              if (!/^[6-9]/.test(value)) return false;
+              return true;
+            };
+            
+            const validateEditorNumber = function () {
+              if (isValidEditorNumber(editorInput.value)) {
+                updateBtn.disabled = false;
+              } else {
+                updateBtn.disabled = true;
+              }
+            };
+            
+            editorInput.addEventListener('input', validateEditorNumber);
+            editorInput.addEventListener('blur', validateEditorNumber);
+          }
+        });
+      </script>
+
+    {% elif active_tab == 'bank' %}
+      <h4 class="mb-4">Bank Details</h4>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="bank">
+        {{ bank_form|crispy }}
+        <button type="submit" class="btn btn-primary mt-2">Save Bank Details</button>
+      </form>
+
+    {% elif active_tab == 'tax' %}
+      <h4 class="mb-4">Tax Details</h4>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="tax">
+        {{ tax_form|crispy }}
+        <button type="submit" class="btn btn-primary mt-2">Save Tax Details</button>
+      </form>
+
+    {% elif active_tab == 'signature' %}
+      <h4 class="mb-4">Supplier Signature</h4>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="signature">
+        {{ signature_form|crispy }}
+        <button type="submit" class="btn btn-primary mt-2">Save Signature</button>
+      </form>
+
+    {% elif active_tab == 'legal' %}
+      {% if active_policy %}
+        <nav class="mb-3">
+          <a href="?tab=legal" class="text-decoration-none text-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Legal Policies
+          </a>
+          <span class="text-secondary mx-1">/</span>
+          <span class="text-secondary">{{ active_policy.title }}</span>
+        </nav>
+        <h4 class="mb-4">{{ active_policy.title }}</h4>
+        {% for para in active_policy_body %}
+          <p>{{ para }}</p>
+        {% empty %}
+          <p class="text-secondary">Content for this policy is not available yet.</p>
+        {% endfor %}
+      {% else %}
+        <h4 class="mb-4">Legal and Policies</h4>
+        {% if legal_policies %}
+          <div class="list-group">
+            {% for policy in legal_policies %}
+              <a href="?tab=legal&doc={{ policy.slug }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                {{ policy.title }}
+                <i class="bi bi-chevron-right text-secondary"></i>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-danger">Debug: legal_policies is empty or missing from context.</p>
+        {% endif %}
+      {% endif %}
+
+    {% elif active_tab == 'email' %}
+      <h3 class="settings-whatsapp-title">Email Notifications</h3>
+      <form method="post" novalidate class="settings-email-form" id="emailSettingsForm">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="email">
+        <div class="settings-email-description">Receive important updates and notifications on Email</div>
+        
+        <div class="settings-email-editor">
+          <div class="settings-email-row">
+            <input type="email" id="id_email_address" name="email_address" placeholder="your@email.com" required>
+            <button type="submit" class="settings-email-subscribe-btn" id="emailSubscribeBtn" disabled>Subscribe Now</button>
+          </div>
+          <div class="settings-email-validation-error" id="emailValidationError"></div>
+        </div>
+      </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const emailInput = document.getElementById('id_email_address');
+          const emailBtn = document.getElementById('emailSubscribeBtn');
+          const validationError = document.getElementById('emailValidationError');
+          
+          if (emailInput && emailBtn && validationError) {
+            const isValidEmail = function (value) {
+              value = value.trim();
+              if (!value) return false;
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              return emailRegex.test(value);
+            };
+            
+            const validateEmail = function () {
+              const value = emailInput.value.trim();
+              validationError.style.display = 'none';
+              validationError.textContent = '';
+              
+              if (!value) {
+                emailBtn.disabled = true;
+                return false;
+              }
+              
+              if (!isValidEmail(value)) {
+                validationError.textContent = 'Please enter a valid email address';
+                validationError.style.display = 'block';
+                emailBtn.disabled = true;
+                return false;
+              }
+              
+              emailBtn.disabled = false;
+              return true;
+            };
+            
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+          }
+        });
+      </script>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

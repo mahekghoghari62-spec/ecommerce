@@ -13,6 +13,302 @@
 
 body { background: var(--crud-bg); }
 
+.settings-heading {
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin: 0 0 18px;
+  color: #1f2430;
+}
+
+.settings-shell {
+  display: flex;
+  align-items: stretch;
+  background: #f3f4f5;
+  border: 1px solid #dfe3ea;
+  min-height: 650px;
+}
+
+.settings-side {
+  width: 46%;
+  max-width: 560px;
+  min-width: 360px;
+  background: #f3f4f5;
+  border-right: 1px solid #dfe3ea;
+}
+
+.settings-menu {
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+}
+
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 70px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 1px solid #dfe3ea;
+  background: transparent;
+  color: #1f2430;
+  font-size: 1.08rem;
+  border-radius: 0 !important;
+  font-weight: 500;
+}
+
+.settings-menu-item i {
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+.settings-menu-item.active {
+  background: #e9e4ff;
+  color: #5448d6;
+  box-shadow: inset 4px 0 0 #5448d6;
+}
+
+.settings-menu-item.active i {
+  color: #5448d6;
+}
+
+.settings-main {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  padding: 26px 28px 0 28px;
+}
+
+.settings-whatsapp-title {
+  margin: 0 0 26px;
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #1f2430;
+}
+
+.settings-whatsapp-state {
+  display: none;
+}
+
+.settings-whatsapp-state.is-visible {
+  display: block;
+}
+
+.settings-whatsapp-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.12rem;
+  font-weight: 500;
+  color: #1f2430;
+  margin-bottom: 24px;
+}
+
+.settings-whatsapp-subscribe-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.12rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 28px;
+}
+
+.settings-whatsapp-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(78, 185, 104, 0.12);
+  color: #22b55d;
+  font-size: 1.15rem;
+}
+
+.settings-whatsapp-subscribe-row .settings-whatsapp-check {
+  background: #3ec77d;
+  color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+}
+
+.settings-number-editor {
+  display: none;
+  margin-bottom: 18px;
+}
+
+.settings-number-editor.is-visible {
+  display: block;
+}
+
+.settings-subscribe-editor {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.settings-number-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.settings-number-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-subscribe-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.settings-subscribe-row input:invalid:not(:placeholder-shown) {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.settings-subscribe-row input.is-invalid,
+.settings-number-row input.is-invalid {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.settings-validation-error {
+  font-size: 0.85rem;
+  color: #ef4444;
+  margin-top: 6px;
+  display: none;
+  font-weight: 500;
+}
+
+.settings-number-row input,
+.settings-subscribe-row input {
+  flex: 1;
+  min-height: 50px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 1rem;
+  color: #1f2430;
+  background: #fff;
+  outline: none;
+}
+
+.settings-number-row input::placeholder,
+.settings-subscribe-row input::placeholder {
+  color: #9ca3af;
+}
+
+.settings-number-row input:focus {
+  border-color: #5f52d9;
+  box-shadow: 0 0 0 3px rgba(95, 82, 217, 0.12);
+}
+
+.settings-subscribe-row input:focus {
+  border-color: #9ca3af;
+  box-shadow: none;
+}
+
+.settings-update-btn,
+.settings-cancel-btn,
+.settings-change-number-btn,
+.settings-subscribe-btn,
+.settings-unsubscribe-btn {
+  min-height: 54px;
+  border-radius: 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-update-btn:disabled,
+.settings-subscribe-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #d0d0d0;
+  border-color: #d0d0d0;
+  color: #707070;
+}
+
+.settings-update-btn {
+  min-width: 120px;
+  padding: 0 22px;
+  border: 1px solid #d0d5dd;
+  background: #d9d9dd;
+  color: #1f2430;
+}
+
+.settings-cancel-btn {
+  min-width: 110px;
+  padding: 0 20px;
+  border: 2px solid #5f52d9;
+  background: transparent;
+  color: #4e45c9;
+}
+
+.settings-change-number-btn {
+  min-width: 200px;
+  min-height: 56px;
+  padding: 0 26px;
+  background: transparent;
+  border: 2px solid #5f52d9;
+  border-radius: 10px;
+  color: #4e45c9;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.settings-subscribe-btn {
+  min-width: 170px;
+  min-height: 50px;
+  padding: 0 24px;
+  background: #b0b4c1;
+  border: 1px solid #b0b4c1;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.settings-whatsapp-divider {
+  border-top: 1px solid #dfe3ea;
+  margin: 28px 0 18px;
+}
+
+.settings-unsubscribe-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 1.08rem;
+  color: #4b5563;
+}
+
+.settings-unsubscribe-btn {
+  background: transparent;
+  border: 2px solid #5f52d9;
+  color: #4e45c9;
+  padding: 0 20px;
+  min-height: 46px;
+  font-size: 1.05rem;
+}
+
+.settings-unsubscribe-row a,
+.settings-unsubscribe-btn {
+  color: #4e45c9;
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .content-header h1,
 .content h1 {
   font-weight: 700;
@@ -50,6 +346,80 @@ body { background: var(--crud-bg); }
 .crud-filters .form-select:focus {
   border-color: var(--crud-primary) !important;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* --- Email Notifications --- */
+.settings-email-description {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.settings-email-editor {
+  margin-bottom: 20px;
+}
+
+.settings-email-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-email-row input {
+  flex: 1;
+  min-height: 50px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 1rem;
+  color: #1f2430;
+  background: #fff;
+  outline: none;
+}
+
+.settings-email-row input::placeholder {
+  color: #9ca3af;
+}
+
+.settings-email-row input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.settings-email-subscribe-btn {
+  min-width: 170px;
+  min-height: 50px;
+  padding: 0 24px;
+  background: #5f52d9;
+  border: 1px solid #5f52d9;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.settings-email-subscribe-btn:hover:not(:disabled) {
+  background: #4e45c9;
+  border-color: #4e45c9;
+}
+
+.settings-email-subscribe-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #d0d0d0;
+  border-color: #d0d0d0;
+  color: #707070;
+}
+
+.settings-email-validation-error {
+  font-size: 0.85rem;
+  color: #ef4444;
+  margin-top: 6px;
+  display: none;
+  font-weight: 500;
 }
 
 .crud-filters .btn {

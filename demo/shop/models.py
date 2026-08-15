@@ -66,3 +66,34 @@ class SiteVisit(models.Model):
     """Simple visitor counter — one row per page hit, used for the dashboard chart."""
     visited_at = models.DateTimeField(auto_now_add=True)
     path = models.CharField(max_length=255, blank=True)
+
+class SupplierProfile(models.Model):
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="supplier_profile")
+
+    # WhatsApp Notifications
+    whatsapp_number = models.CharField(max_length=15, blank=True)
+    whatsapp_notifications_enabled = models.BooleanField(default=True)
+
+    # Bank Details
+    bank_account_holder = models.CharField(max_length=150, blank=True)
+    bank_account_number = models.CharField(max_length=30, blank=True)
+    bank_ifsc = models.CharField(max_length=15, blank=True)
+    bank_name = models.CharField(max_length=150, blank=True)
+    bank_branch = models.CharField(max_length=150, blank=True)
+
+    # Tax Details
+    gstin = models.CharField(max_length=15, blank=True)
+    pan_number = models.CharField(max_length=10, blank=True)
+
+    # Supplier Signature
+    signature_text = models.CharField(max_length=150, blank=True)
+    signature_image = models.ImageField(upload_to="signatures/", blank=True, null=True)
+
+    # Email Notifications
+    email_notifications_enabled = models.BooleanField(default=True)
+    notification_email = models.EmailField(blank=True)
+
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Profile — {self.user.username}"

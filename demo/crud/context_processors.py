@@ -1,5 +1,6 @@
 from copy import deepcopy
 from django.conf import settings
+from django.urls import reverse
 
 
 def dynamic_usermenu(request):
@@ -12,6 +13,9 @@ def dynamic_usermenu(request):
         usermenu["name"] = full_name
         usermenu["description"] = "Staff" if request.user.is_staff else "User"
         usermenu["since"] = f"Member since {request.user.date_joined.strftime('%b. %Y')}"
+        usermenu["stats"] = [
+            {"label": "Settings", "url": reverse("crud:settings")},
+        ]
         adminlte["usermenu"] = usermenu
 
     return {"adminlte": adminlte}

@@ -15,7 +15,14 @@
       <div class="card-header border-0">
         <div class="d-flex justify-content-between">
           <h3 class="card-title">Online Store Visitors</h3>
-          <a href="javascript:void(0);" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">View Report</a>
+          <div class="dropdown">
+            <a href="#" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">View Report</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'crud:store_reports' %}"><i class="bi bi-table me-2"></i>View Report</a></li>
+              <li><a class="dropdown-item" href="{% url 'crud:visitors_report_pdf' %}" target="_blank"><i class="bi bi-file-earmark-pdf me-2"></i>Download PDF</a></li>
+              <li><a class="dropdown-item" href="{% url 'crud:visitors_report_excel' %}"><i class="bi bi-file-earmark-excel me-2"></i>Download Excel</a></li>
+            </ul>
+          </div>
         </div>
       </div>
       <div class="card-body">
@@ -89,7 +96,14 @@
       <div class="card-header border-0">
         <div class="d-flex justify-content-between">
           <h3 class="card-title">Sales</h3>
-          <a href="javascript:void(0);" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">View Report</a>
+          <div class="dropdown">
+            <a href="#" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">View Report</a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'crud:store_reports' %}"><i class="bi bi-table me-2"></i>View Report</a></li>
+              <li><a class="dropdown-item" href="{% url 'crud:sales_report_pdf' %}" target="_blank"><i class="bi bi-file-earmark-pdf me-2"></i>Download PDF</a></li>
+              <li><a class="dropdown-item" href="{% url 'crud:sales_report_excel' %}"><i class="bi bi-file-earmark-excel me-2"></i>Download Excel</a></li>
+            </ul>
+          </div>
         </div>
       </div>
       <div class="card-body">

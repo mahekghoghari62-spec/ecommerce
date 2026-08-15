@@ -1,0 +1,94 @@
+{% extends "adminlte/page.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Store Reports' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="/">Home</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Store Reports' %}</li>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/crud-custom.css' %}">
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="crud-card h-100">
+      <h6 class="fw-bold mb-2"><i class="bi bi-graph-up me-2" style="color:#4f46e5;"></i>{% trans 'Sales Report' %}</h6>
+      <p class="text-muted small">{% trans 'Download a full breakdown of all orders and sales.' %}</p>
+      <div class="d-flex gap-2">
+        <a href="{% url 'crud:sales_report_pdf' %}" target="_blank" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>{% trans 'View PDF' %}</a>
+        <a href="{% url 'crud:sales_report_excel' %}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="crud-card h-100">
+      <h6 class="fw-bold mb-2"><i class="bi bi-eye me-2" style="color:#16a34a;"></i>{% trans 'Online Store Visitors Report' %}</h6>
+      <p class="text-muted small">{% trans 'Download daily views and clicks data.' %}</p>
+      <div class="d-flex gap-2">
+        <a href="{% url 'crud:visitors_report_pdf' %}" target="_blank" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>{% trans 'View PDF' %}</a>
+        <a href="{% url 'crud:visitors_report_excel' %}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="crud-card">
+      <h6 class="fw-bold mb-3">{% trans 'Sales Preview' %} <span class="text-muted small fw-normal">({% trans 'latest 20' %})</span></h6>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>{% trans 'Order #' %}</th>
+              <th>{% trans 'Customer' %}</th>
+              <th>{% trans 'Amount' %}</th>
+              <th>{% trans 'Status' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+            <tr>
+              <td>{{ o.order_number }}</td>
+              <td>{{ o.customer_name }}</td>
+              <td>${{ o.amount }}</td>
+              <td><span class="badge text-bg-{{ o.status_color }}">{{ o.get_status_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3">{% trans 'No orders yet.' %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="crud-card">
+      <h6 class="fw-bold mb-3">{% trans 'Visitors Preview' %} <span class="text-muted small fw-normal">({% trans 'latest 20' %})</span></h6>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>{% trans 'Date' %}</th>
+              <th>{% trans 'Total Views' %}</th>
+              <th>{% trans 'Total Clicks' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in metrics %}
+            <tr>
+              <td>{{ m.date }}</td>
+              <td>{{ m.total_views }}</td>
+              <td>{{ m.total_clicks }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-muted py-3">{% trans 'No data yet.' %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

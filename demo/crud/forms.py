@@ -12,7 +12,7 @@ from .models import (
     ImageBulkUpload, Inventory, InfluencerCampaign, Order, Quality,
     Return, Pricing, Product, Promotion, Payment, Warehouse,
 )
-
+from shop.models import SupplierProfile
 
 NAME_RE = re.compile(r"^[A-Za-z\s]+$")
 ALPHANUM_RE = re.compile(r"^[A-Za-z0-9\s\-_&.]+$")
@@ -985,3 +985,199 @@ class PromotionForm(forms.ModelForm):
                 ),
             ),
         )
+import re
+from django import forms
+# from shop.models import SupplierProfile   # <- already imported at top of forms.py
+
+
+# --- Settings: append these forms to crud/forms.py ---
+
+class WhatsAppSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = ["whatsapp_number", "whatsapp_notifications_enabled"]
+        widgets = {
+            "whatsapp_number": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "e.g. 9876543210",
+                "maxlength": "10",
+                "pattern": "[6-9][0-9]{9}",
+                "inputmode": "numeric",
+                "title": "Enter a valid 10-digit Indian mobile number",
+            }),
+            "whatsapp_notifications_enabled": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+        }
+
+    def clean_whatsapp_number(self):
+        number = self.cleaned_data.get("whatsapp_number", "").strip()
+        if not number:
+            return number
+        if not number.isdigit():
+            raise forms.ValidationError("Mobile number must contain digits only.")
+        if len(number) != 10:
+            raise forms.ValidationError("Mobile number must be exactly 10 digits.")
+        if number[0] not in "6789":
+            raise forms.ValidationError("Enter a valid Indian mobile number (must start with 6-9).")
+        return number
+
+
+class BankDetailsForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = [
+            "bank_account_holder", "bank_account_number",
+            "bank_ifsc", "bank_name", "bank_branch",
+        ]
+        widgets = {
+            "bank_account_holder": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "Account Holder Name",
+                "pattern": "[A-Za-z .]+", "title": "Only letters and spaces allowed",
+            }),
+            "bank_account_number": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "Account Number",
+                "maxlength": "18", "inputmode": "numeric",
+                "pattern": "[0-9]{9,18}", "title": "9 to 18 digit account number",
+            }),
+            "bank_ifsc": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "IFSC Code",
+                "style": "text-transform:uppercase", "maxlength": "11",
+                "pattern": "[A-Za-z]{4}0[A-Za-z0-9]{6}",
+                "title": "Format: 4 letters + 0 + 6 alphanumeric (e.g. HDFC0001234)",
+            }),
+            "bank_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Bank Name"}),
+            "bank_branch": forms.TextInput(attrs={"class": "form-control", "placeholder": "Branch"}),
+        }
+
+    def clean_bank_account_holder(self):
+        name = self.cleaned_data.get("bank_account_holder", "").strip()
+        if not name:
+            raise forms.ValidationError("Account holder name is required.")
+        if not re.match(r"^[A-Za-z .]+$", name):
+            raise forms.ValidationError("Only letters and spaces are allowed.")
+        return name
+
+    def clean_bank_account_number(self):
+        number = self.cleaned_data.get("bank_account_number", "").strip()
+        if not number:
+            raise forms.ValidationError("Account number is required.")
+        if not number.isdigit():
+            raise forms.ValidationError("Account number must contain digits only.")
+        if not (9 <= len(number) <= 18):
+            raise forms.ValidationError("Account number must be 9 to 18 digits long.")
+        return number
+
+    def clean_bank_ifsc(self):
+        ifsc = self.cleaned_data.get("bank_ifsc", "").upper().strip()
+        if not ifsc:
+            raise forms.ValidationError("IFSC code is required.")
+        if not re.match(r"^[A-Z]{4}0[A-Z0-9]{6}$", ifsc):
+            raise forms.ValidationError("Invalid IFSC format (e.g. HDFC0001234).")
+        return ifsc
+
+    def clean_bank_name(self):
+        name = self.cleaned_data.get("bank_name", "").strip()
+        if not name:
+            raise forms.ValidationError("Bank name is required.")
+        return name
+
+    def clean_bank_branch(self):
+        branch = self.cleaned_data.get("bank_branch", "").strip()
+        if not branch:
+            raise forms.ValidationError("Branch is required.")
+        return branch
+
+
+class TaxDetailsForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = ["gstin", "pan_number"]
+        widgets = {
+            "gstin": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "22AAAAA0000A1Z5",
+                "style": "text-transform:uppercase", "maxlength": "15",
+                "pattern": "[0-9]{2}[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}[1-9A-Za-z]{1}Z[0-9A-Za-z]{1}",
+                "title": "Enter a valid 15-character GSTIN",
+            }),
+            "pan_number": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "AAAAA0000A",
+                "style": "text-transform:uppercase", "maxlength": "10",
+                "pattern": "[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}",
+                "title": "Enter a valid 10-character PAN",
+            }),
+        }
+
+    def clean_gstin(self):
+        gstin = self.cleaned_data.get("gstin", "").upper().strip()
+        if not gstin:
+            raise forms.ValidationError("GSTIN is required.")
+        if not re.match(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$", gstin):
+            raise forms.ValidationError("Invalid GSTIN format (e.g. 22AAAAA0000A1Z5).")
+        return gstin
+
+    def clean_pan_number(self):
+        pan = self.cleaned_data.get("pan_number", "").upper().strip()
+        if not pan:
+            raise forms.ValidationError("PAN is required.")
+        if not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$", pan):
+            raise forms.ValidationError("Invalid PAN format (e.g. AAAAA0000A).")
+        return pan
+
+
+class SupplierSignatureForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = ["signature_text", "signature_image"]
+        widgets = {
+            "signature_text": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "Type your signature",
+                "maxlength": "150",
+            }),
+            "signature_image": forms.ClearableFileInput(attrs={
+                "class": "form-control", "accept": "image/png,image/jpeg,image/jpg",
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        text = cleaned_data.get("signature_text", "")
+        image = cleaned_data.get("signature_image")
+        if not text and not image:
+            raise forms.ValidationError(
+                "Provide either a text signature or upload a signature image."
+            )
+        return cleaned_data
+
+    def clean_signature_image(self):
+        image = self.cleaned_data.get("signature_image")
+        if image and hasattr(image, "content_type"):
+            if image.content_type not in ("image/png", "image/jpeg"):
+                raise forms.ValidationError("Only PNG or JPEG images are allowed.")
+            max_size_mb = 2
+            if image.size > max_size_mb * 1024 * 1024:
+                raise forms.ValidationError(f"Image size must be under {max_size_mb}MB.")
+        return image
+
+
+class EmailNotificationsForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = ["notification_email", "email_notifications_enabled"]
+        widgets = {
+            "notification_email": forms.EmailInput(attrs={
+                "class": "form-control", "placeholder": "you@example.com",
+            }),
+            "email_notifications_enabled": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+        }
+
+    def clean_notification_email(self):
+        email = self.cleaned_data.get("notification_email", "").strip()
+        enabled = self.data.get("email_notifications_enabled")
+        if enabled and not email:
+            raise forms.ValidationError(
+                "Provide an email address to enable email notifications."
+            )
+        return email
