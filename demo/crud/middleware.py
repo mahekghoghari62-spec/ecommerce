@@ -21,6 +21,7 @@ class LoginRequiredMiddleware:
         "/static/",
         "/media/",
         "/favicon.ico",
+        "/shop/",
     ]
 
     def __init__(self, get_response):

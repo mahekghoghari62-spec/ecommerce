@@ -2,4 +2,49 @@
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   {% crispy form %}
+
+  {% if image_formset %}
+  <hr>
+  <h6 class="fw-bold mb-2">Product Gallery Images</h6>
+  {{ image_formset.management_form }}
+  <div id="image-formset-rows">
+    {% for img_form in image_formset %}
+    <div class="row g-2 align-items-center mb-2 image-form-row">
+      <div class="col-6">{{ img_form.image }}</div>
+      <div class="col-3">{{ img_form.order }}</div>
+      <div class="col-3 form-check">
+        {% if img_form.instance.pk %}
+          {{ img_form.DELETE }} <label class="form-check-label small">Remove</label>
+        {% endif %}
+      </div>
+      {{ img_form.id }}
+      {% for error in img_form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-image-row">+ Add Image</button>
+  {% endif %}
+
+  {% if variant_formset %}
+  <hr>
+  <h6 class="fw-bold mb-2">Size / Stock Variants</h6>
+  {{ variant_formset.management_form }}
+  <div id="variant-formset-rows">
+    {% for var_form in variant_formset %}
+    <div class="row g-2 align-items-center mb-2 variant-form-row">
+      <div class="col-4">{{ var_form.size }}</div>
+      <div class="col-3">{{ var_form.stock }}</div>
+      <div class="col-3">{{ var_form.price_adjustment }}</div>
+      <div class="col-2 form-check">
+        {% if var_form.instance.pk %}
+          {{ var_form.DELETE }} <label class="form-check-label small">Remove</label>
+        {% endif %}
+      </div>
+      {{ var_form.id }}
+      {% for error in var_form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-variant-row">+ Add Size</button>
+  {% endif %}
 </form>

@@ -1,0 +1,25 @@
+{% extends "adminlte/page.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans 'Delete user' %}{% endblock %}
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'crud:paneluser_list' %}">{% trans 'Users' %}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% trans 'Delete' %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card card-danger card-outline">
+      <div class="card-body">
+        <p>{% blocktrans with name=object.full_name %}Are you sure you want to delete user “{{ name }}”? This will also remove their login access permanently.{% endblocktrans %}</p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">{% trans 'Delete' %}</button>
+          <a href="{% url 'crud:paneluser_list' %}" class="btn btn-outline-secondary">{% trans 'Cancel' %}</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

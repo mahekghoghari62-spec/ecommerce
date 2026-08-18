@@ -1,19 +1,20 @@
 import re
-
+from django.contrib.auth.models import User
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Column, Layout, Row, Submit
 from django import forms
 from django.urls import reverse
 from django.utils import timezone
+from django.forms import inlineformset_factory
 
+from shop.models import SupplierProfile
 from .models import (
     Advertisement, CatalogUpload, CallbackRequest, Claim, Contact,
     ImageBulkUpload, Inventory, InfluencerCampaign, Order, Quality,
-    Return, Pricing, Product, Promotion, Payment, Warehouse,
+    Return, Pricing, Product, ProductImage, ProductVariant, Promotion,
+    Payment, Warehouse, PanelUser
 )
-from shop.models import SupplierProfile
-
 NAME_RE = re.compile(r"^[A-Za-z\s]+$")
 ALPHANUM_RE = re.compile(r"^[A-Za-z0-9\s\-_&.]+$")
 PHONE_RE = re.compile(r"^\+?[0-9\-\s]{7,15}$")
@@ -1181,3 +1182,136 @@ class EmailNotificationsForm(forms.ModelForm):
                 "Provide an email address to enable email notifications."
             )
         return email
+# ============================================================
+# ADD THIS IMPORT TO THE TOP OF crud/forms.py:
+# from django.contrib.auth.models import User
+# from .models import PanelUser   (add PanelUser to your existing models import)
+#
+# THEN ADD THIS CLASS TO THE END OF crud/forms.py
+# ============================================================
+
+
+# ============================================================
+# REPLACE your existing PanelUserForm's __init__ method with this version
+# (adds a crispy FormHelper so the modal shows a Submit button).
+#
+# ADD THIS IMPORT TO THE TOP OF crud/forms.py (if not already present):
+# from crispy_forms.helper import FormHelper
+# from crispy_forms.layout import Submit
+# ============================================================
+
+
+class PanelUserForm(forms.ModelForm):
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Login username"}),
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "email@example.com"}),
+    )
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Set login password",
+        }),
+        help_text="New user માટે required. Edit કરતી વખતે ખાલી રાખો તો current password રહેશે.",
+    )
+
+    class Meta:
+        model = PanelUser
+        fields = ["full_name", "role", "phone", "status"]
+        widgets = {
+            "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Full name"}),
+            "role": forms.Select(attrs={"class": "form-select"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone number"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Editing an existing panel user: prefill + lock username
+            self.fields["username"].initial = self.instance.user.username
+            self.fields["email"].initial = self.instance.user.email
+            self.fields["username"].widget.attrs["readonly"] = True
+            self.fields["password"].help_text = "ખાલી રાખો તો current password બદલાશે નહીં."
+
+        # --- crispy form: adds the Submit button in the modal ---
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_method = "post"
+        submit_label = "Update" if self.instance and self.instance.pk else "Create User"
+        self.helper.add_input(Submit("submit", submit_label, css_class="btn btn-primary w-100 mt-2"))
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        qs = User.objects.filter(username__iexact=username)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.user_id)
+        if qs.exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        qs = User.objects.filter(email__iexact=email)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.user_id)
+        if qs.exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password", "")
+        is_new = not (self.instance and self.instance.pk)
+        if is_new and not password:
+            raise forms.ValidationError("Password is required for new users.")
+        if password and len(password) < 8:
+            raise forms.ValidationError("Password must be at least 8 characters long.")
+        return password
+
+    def save(self, commit=True):
+        panel_user = super().save(commit=False)
+        username = self.cleaned_data["username"]
+        email = self.cleaned_data["email"]
+        password = self.cleaned_data.get("password")
+
+        if panel_user.pk and panel_user.user_id:
+            user = panel_user.user
+        else:
+            user = User(username=username)
+
+        user.username = username
+        user.email = email
+        user.is_staff = True
+        if password:
+            user.set_password(password)
+
+        if commit:
+            user.save()
+            panel_user.user = user
+            panel_user.save()
+        return panel_user
+# --- Inline formsets for Product gallery images & size variants ---
+
+ProductImageFormSet = inlineformset_factory(
+    Product, ProductImage,
+    fields=["image", "order"],
+    extra=1, can_delete=True,
+    widgets={
+        "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        "order": forms.NumberInput(attrs={"class": "form-control", "min": 0, "style": "width:80px"}),
+    },
+)
+
+ProductVariantFormSet = inlineformset_factory(
+    Product, ProductVariant,
+    fields=["size", "stock", "price_adjustment"],
+    extra=1, can_delete=True,
+    widgets={
+        "size": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Free Size, M, L"}),
+        "stock": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+        "price_adjustment": forms.NumberInput(attrs={"class": "form-control", "step": 0.01, "min": 0}),
+    },
+)

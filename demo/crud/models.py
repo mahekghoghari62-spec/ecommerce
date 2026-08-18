@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-
+from django.conf import settings
 class Company(models.Model):
     INDUSTRY_CHOICES = [
         ("tech", "Technology"), ("finance", "Finance"), ("health", "Healthcare"),
@@ -478,6 +478,17 @@ class Product(models.Model):
         gst_amount = (self.price * self.gst_percent) / 100
         return self.price + gst_amount
 
+    @property
+    def average_rating(self):
+        reviews = self.reviews.all()
+        if reviews:
+            return round(sum(r.rating for r in reviews) / reviews.count(), 1)
+        return 0
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
 
 class Payment(models.Model):
     METHOD_CHOICES = [
@@ -809,3 +820,104 @@ class DailyMetric(models.Model):
 
     def __str__(self):
         return f"Metrics {self.date}"
+
+
+class PanelUser(models.Model):
+    ROLE_CHOICES = [
+        ("admin", "Admin"),
+        ("manager", "Manager"),
+        ("staff", "Staff"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="panel_profile")
+    full_name = models.CharField(max_length=150)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="staff")
+    phone = models.CharField(max_length=15, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["full_name"]
+
+    def __str__(self):
+        return self.full_name
+
+    def get_absolute_url(self):
+        return reverse("crud:paneluser_update", args=[self.pk])
+
+    @property
+    def role_color(self):
+        return {"admin": "danger", "manager": "primary", "staff": "secondary"}.get(self.role, "secondary")
+
+    @property
+    def status_color(self):
+        return {"active": "success", "inactive": "secondary"}.get(self.status, "secondary")
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="products/gallery/")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
+
+
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
+    size = models.CharField(max_length=50, help_text="e.g. Free Size, S, M, L, XL")
+    stock = models.PositiveIntegerField(default=0)
+    price_adjustment = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        help_text="Extra amount added to base price for this size (0 if same price)"
+    )
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.size}"
+
+    @property
+    def is_in_stock(self):
+        return self.stock > 0
+
+    @property
+    def final_price(self):
+        return self.product.selling_price + self.price_adjustment
+
+
+class ProductReview(models.Model):
+    RATING_CHOICES = [(i, f"{i} Star{'s' if i > 1 else ''}") for i in range(1, 6)]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="product_reviews"
+    )
+    reviewer_name = models.CharField(max_length=150, blank=True)
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES, default=5)
+    comment = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"{self.rating}★ — {self.product.name}"
+
+    @property
+    def display_name(self):
+        if self.reviewer_name:
+            return self.reviewer_name
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return "Anonymous"

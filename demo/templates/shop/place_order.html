@@ -1,0 +1,171 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Place Order - MyShop{% endblock %}
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Select Delivery Address</h6>
+                {% if addresses %}
+                <form method="post" id="placeOrderForm">
+                    {% csrf_token %}
+                    {% for address in addresses %}
+                    <div class="form-check border rounded p-3 mb-2">
+                        <input class="form-check-input" type="radio" name="address_id"
+                               value="{{ address.id }}" id="addr{{ address.id }}"
+                               {% if address.is_default %}checked{% endif %} required>
+                        <label class="form-check-label" for="addr{{ address.id }}">
+                            {{ address }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </form>
+                {% else %}
+                <div class="alert alert-warning mb-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    You don't have any saved address. Please add one to continue with payment.
+                </div>
+                <a href="{% url 'shop:address_add' %}" class="btn btn-outline-primary btn-sm">Add Address</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Select Payment Method</h6>
+
+                <div class="form-check border rounded p-3 mb-2">
+                    <input class="form-check-input" type="radio" name="payment_method"
+                           value="cod" id="pmCod" form="placeOrderForm" checked required
+                           {% if not addresses %}disabled{% endif %}>
+                    <label class="form-check-label" for="pmCod">
+                        <i class="bi bi-cash-coin me-1"></i> Cash on Delivery (COD)
+                    </label>
+                </div>
+
+                <div class="form-check border rounded p-3 mb-2">
+                    <input class="form-check-input" type="radio" name="payment_method"
+                           value="upi" id="pmUpi" form="placeOrderForm" required
+                           {% if not addresses %}disabled{% endif %}>
+                    <label class="form-check-label" for="pmUpi">
+                        <i class="bi bi-phone me-1"></i> UPI
+                    </label>
+                </div>
+
+                <div class="form-check border rounded p-3 mb-2">
+                    <input class="form-check-input" type="radio" name="payment_method"
+                           value="card" id="pmCard" form="placeOrderForm" required
+                           {% if not addresses %}disabled{% endif %}>
+                    <label class="form-check-label" for="pmCard">
+                        <i class="bi bi-credit-card me-1"></i> Credit / Debit Card
+                    </label>
+                </div>
+
+                {% if not addresses %}
+                <div class="text-muted small mt-1">Add a delivery address above to enable payment options.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Order Summary</h6>
+                {% for item in active_items %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                    <span>₹{{ item.line_total }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm sticky-top" style="top:1rem;">
+            <div class="card-body">
+                <h6 class="text-muted border-bottom pb-2 mb-3">Price Details</h6>
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total Amount</span>
+                    <span>₹{{ subtotal }}</span>
+                </div>
+                {% if addresses %}
+                <button type="submit" form="placeOrderForm" class="btn btn-warning w-100 fw-bold mt-3">
+                    Confirm Order
+                </button>
+                {% else %}
+                <button type="button" class="btn btn-secondary w-100 fw-bold mt-3" disabled>
+                    Add Address to Continue
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('placeOrderForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        var selected = document.querySelector('input[name="payment_method"]:checked');
+        if (!selected) return;
+
+        if (selected.value === 'cod') {
+            return; // normal submit, COD ne gateway ni jarur nathi
+        }
+
+        e.preventDefault();
+
+        fetch("{% url 'shop:create_razorpay_order' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": "{{ csrf_token }}" },
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                alert(data.error || "Could not initiate payment.");
+                return;
+            }
+
+            var options = {
+                key: data.key,
+                amount: data.amount,
+                currency: "INR",
+                name: "MyShop",
+                description: "Order Payment",
+                order_id: data.order_id,
+                prefill: { name: data.name, email: data.email },
+                handler: function (response) {
+                    var f1 = document.createElement('input');
+                    f1.type = 'hidden'; f1.name = 'razorpay_payment_id'; f1.value = response.razorpay_payment_id;
+                    form.appendChild(f1);
+
+                    var f2 = document.createElement('input');
+                    f2.type = 'hidden'; f2.name = 'razorpay_order_id'; f2.value = response.razorpay_order_id;
+                    form.appendChild(f2);
+
+                    var f3 = document.createElement('input');
+                    f3.type = 'hidden'; f3.name = 'razorpay_signature'; f3.value = response.razorpay_signature;
+                    form.appendChild(f3);
+
+                    form.submit();
+                },
+                modal: { ondismiss: function () {} },
+            };
+
+            var rzp = new Razorpay(options);
+            rzp.open();
+        });
+    });
+});
+</script>
+{% endblock %}

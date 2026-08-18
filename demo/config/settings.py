@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "crud.middleware.LoginRequiredMiddleware",
+    
 ]
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -95,6 +96,7 @@ TEMPLATES = [
                 "django.template.context_processors.i18n",
                 "django_adminlte4.context_processors.adminlte",
                 "crud.context_processors.dynamic_usermenu",
+                'shop.context_processors.cart_count',
             ],
             "loaders": [
                 (
@@ -254,3 +256,5 @@ ADMINLTE = {
     "sidebar_theme": "dark",
     "classes_topnav_container": "container-fluid d-flex justify-content-between align-items-center",
 }
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True

@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from django.db.models import ProtectedError
 
 
 class AjaxModalFormMixin:
@@ -45,7 +46,20 @@ class AjaxModalDeleteMixin:
         return super().render_to_response(context, **response_kwargs)
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        try:
+            response = super().form_valid(form)
+        except ProtectedError as e:
+            related_count = len(e.protected_objects) if hasattr(e, "protected_objects") else 0
+            error_message = (
+                f"Cannot delete “{self.object}” — it is linked to {related_count} other "
+                f"record(s) (orders, pricing, inventory, etc.). Remove or reassign those first."
+            )
+            if self.is_ajax():
+                return JsonResponse({"success": False, "error": error_message}, status=400)
+            from django.contrib import messages
+            messages.error(self.request, error_message)
+            return self.render_to_response(self.get_context_data())
+
         if self.is_ajax():
             return JsonResponse({"success": True})
         return response

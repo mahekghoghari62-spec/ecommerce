@@ -1,0 +1,36 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Login - MyShop{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-1">Login</h4>
+                <p class="text-muted mb-4">Sign in to continue shopping</p>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="{{ form.username.html_name }}" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="{{ form.password.html_name }}" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+
+                <p class="text-center mt-3 mb-0">
+                    New customer? <a href="{% url 'shop:register' %}?next={{ next }}">Create an account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

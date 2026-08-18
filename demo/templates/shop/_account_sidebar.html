@@ -1,0 +1,34 @@
+<style>
+    .msh-side-link {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.75rem 1rem;
+        color: #333;
+        text-decoration: none;
+        font-size: 0.9rem;
+        border-left: 3px solid transparent;
+        background: #fff;
+    }
+    .msh-side-link:hover { background: var(--meesho-pink-light); color: var(--meesho-pink-dark); }
+    .msh-side-link.active {
+        background: var(--meesho-pink);
+        color: #fff;
+        border-left-color: var(--meesho-pink-dark);
+        font-weight: 600;
+    }
+    .msh-side-card {
+        border: 1px solid #eee;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+</style>
+
+<div class="msh-side-card shadow-sm">
+    <a href="{% url 'shop:profile' %}" class="msh-side-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="bi bi-person"></i> My Profile
+    </a>
+    <a href="{% url 'shop:address_list' %}" class="msh-side-link {% if 'address' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-geo-alt"></i> Address Book
+    </a>
+</div>

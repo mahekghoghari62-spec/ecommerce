@@ -1,0 +1,36 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}{{ title }} - MyShop{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">{% include "shop/_account_sidebar.html" %}</div>
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">{{ title }}</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Full Name</label>{{ form.full_name }}</div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Phone</label>{{ form.phone }}</div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Address Line 1</label>{{ form.address_line1 }}</div>
+                    <div class="mb-3"><label class="form-label">Address Line 2 (optional)</label>{{ form.address_line2 }}</div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3"><label class="form-label">City</label>{{ form.city }}</div>
+                        <div class="col-md-4 mb-3"><label class="form-label">State</label>{{ form.state }}</div>
+                        <div class="col-md-4 mb-3"><label class="form-label">Pincode</label>{{ form.pincode }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Address Type</label>{{ form.address_type }}</div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check">{{ form.is_default }}<label class="form-check-label ms-1">Set as default address</label></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Address</button>
+                    <a href="{% url 'shop:address_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

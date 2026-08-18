@@ -1,0 +1,14 @@
+<div class="d-flex gap-1">
+    <a href="{% url 'crud:paneluser_update' record.pk %}"
+       class="btn btn-sm btn-outline-primary"
+       data-modal-url="{% url 'crud:paneluser_update' record.pk %}"
+       data-modal-title="Edit user">
+        <i class="bi bi-pencil"></i>
+    </a>
+    <a href="{% url 'crud:paneluser_delete' record.pk %}"
+       class="btn btn-sm btn-outline-danger"
+       data-modal-url="{% url 'crud:paneluser_delete' record.pk %}"
+       data-modal-title="Delete user">
+        <i class="bi bi-trash"></i>
+    </a>
+</div>

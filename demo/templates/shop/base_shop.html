@@ -1,0 +1,214 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}My Shop{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/bootstrap-icons.min.css' %}">
+    <style>
+        :root {
+            --meesho-pink: #9F2089;
+            --meesho-pink-dark: #6E1560;
+            --meesho-pink-light: #FCE9F9;
+        }
+
+        .cat-strip { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+        .cat-strip::-webkit-scrollbar { display: none; }
+        .cat-item {
+            display: inline-flex; flex-direction: column; align-items: center;
+            width: 90px; padding: 10px 4px; color: #212121; text-decoration: none;
+            border-bottom: 3px solid transparent;
+        }
+        .cat-item.active { color: var(--meesho-pink); border-bottom-color: var(--meesho-pink); font-weight: 600; }
+        .cat-item:hover { color: var(--meesho-pink); }
+        .cat-item i { font-size: 1.6rem; margin-bottom: 4px; }
+        .cat-item span { font-size: 0.8rem; }
+
+        .topbar-brand {
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: -0.5px;
+        }
+
+        .msh-navbar {
+            background: linear-gradient(100deg, #C2185B 0%, #9F2089 60%, #6E1560 100%);
+        }
+
+        .msh-search {
+            border: none;
+            border-radius: 6px 0 0 6px;
+        }
+        .msh-search-btn {
+            background: #fff;
+            border: none;
+            border-radius: 0 6px 6px 0;
+            color: var(--meesho-pink);
+            padding: 0 0.9rem;
+        }
+
+        .msh-navlink {
+            color: rgba(255,255,255,0.95);
+            text-decoration: none;
+        }
+        .msh-navlink:hover { color: #fff; }
+
+        .cart-badge {
+            position: absolute; top: -6px; right: -14px;
+            background: #ff6161; color: #fff; font-size: 0.65rem;
+            border-radius: 50%; padding: 1px 5px; font-weight: 700;
+        }
+
+        .msh-dropdown-toggle::after { display: none; }
+
+        footer.msh-footer {
+            background: #2b0a26;
+        }
+
+        /* Add-to-cart widget: button + quantity stepper */
+        .msh-cart-widget { width: 100%; }
+        .btn-msh {
+            background: var(--meesho-pink);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.82rem;
+            border-radius: 6px;
+            padding: 0.4rem 0;
+            width: 100%;
+        }
+        .btn-msh:hover { background: var(--meesho-pink-dark); color: #fff; }
+        .btn-msh:disabled { opacity: 0.7; }
+
+        .msh-qty-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--meesho-pink);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .msh-qty-btn {
+            background: var(--meesho-pink-light);
+            border: none;
+            color: var(--meesho-pink-dark);
+            font-weight: 700;
+            font-size: 1rem;
+            width: 34px;
+            height: 32px;
+            line-height: 1;
+        }
+        .msh-qty-btn:hover { background: var(--meesho-pink); color: #fff; }
+        .msh-qty-value {
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #222;
+        }
+
+        /* Toast */
+        .msh-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #2b0a26;
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity .25s ease, transform .25s ease;
+            z-index: 2000;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+        .msh-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .msh-toast i { color: #ff8fd6; margin-right: 6px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-body-secondary">
+
+<!-- Top bar -->
+<nav class="navbar navbar-dark msh-navbar">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand topbar-brand" href="{% url 'shop:home' %}">🛍️ MyShop</a>
+        <form class="d-flex flex-grow-1 mx-4" role="search" style="max-width:600px;">
+            <div class="input-group">
+                <input class="form-control msh-search" type="search" placeholder="Search for Products, Brands and More">
+                <button class="msh-search-btn" type="submit"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+        <div class="d-flex align-items-center gap-4">
+    {% if request.user.is_authenticated %}
+    <div class="dropdown">
+        <a href="#" class="msh-navlink dropdown-toggle msh-dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle me-1"></i>{{ request.user.username }} <i class="bi bi-chevron-down small ms-1"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><h6 class="dropdown-header">Hi, {{ request.user.username }}</h6></li>
+            <li><a class="dropdown-item" href="{% url 'shop:profile' %}"><i class="bi bi-person me-2"></i>My Profile</a></li>
+<li><a class="dropdown-item" href="{% url 'shop:address_list' %}"><i class="bi bi-geo-alt me-2"></i>Address Book</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+    {% else %}
+<div class="dropdown">
+    <a href="#" class="msh-navlink dropdown-toggle msh-dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="bi bi-person-circle me-1"></i>Login
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end shadow p-3" style="width:260px;">
+        <li class="d-flex justify-content-between align-items-center mb-3 px-2">
+            <span class="text-muted small">New customer?</span>
+            <a href="{% url 'shop:register' %}?next={{ request.path }}" style="color: var(--meesho-pink);" class="fw-semibold small">Sign Up</a>
+        </li>
+        <li class="px-2">
+            <a href="{% url 'shop:login' %}?next={{ request.path }}" class="btn w-100 text-white" style="background: var(--meesho-pink);">Login</a>
+        </li>
+    </ul>
+</div>
+{% endif %}
+    <a href="{% if request.user.is_authenticated %}{% url 'shop:cart' %}{% else %}{% url 'shop:login' %}?next={% url 'shop:cart' %}{% endif %}"
+       class="msh-navlink position-relative">
+        <i class="bi bi-cart3 fs-5"></i> Cart
+        <span id="msh-cart-badge" class="cart-badge{% if not cart_item_count %} d-none{% endif %}">{{ cart_item_count }}</span>
+    </a>
+</div>
+    </div>
+</nav>
+
+<!-- Category icon strip -->
+<div class="bg-white shadow-sm">
+    <div class="container-fluid px-4 cat-strip">
+        <a href="{% url 'shop:home' %}" class="cat-item {% if not current_category %}active{% endif %}">
+            <i class="bi bi-grid-fill"></i>
+            <span>For You</span>
+        </a>
+        {% for key, label, icon in nav_categories %}
+        <a href="{% url 'shop:category' key %}" class="cat-item {% if current_category == key %}active{% endif %}">
+            <i class="bi {{ icon }}"></i>
+            <span>{{ label }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+<main class="container my-4">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="msh-footer text-white text-center py-3 mt-5">
+    <small>&copy; 2026 MyShop. All rights reserved.</small>
+</footer>
+
+<script src="{% static 'adminlte/dist/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Delete Address - MyShop{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">{% include "shop/_account_sidebar.html" %}</div>
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Delete this address?</h5>
+                <p class="text-muted">{{ address.full_name }} — {{ address.address_line1 }}, {{ address.city }}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <a href="{% url 'shop:address_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

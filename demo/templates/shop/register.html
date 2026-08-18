@@ -1,0 +1,199 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Register - MyShop{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-1">Create Account</h4>
+                <p class="text-muted mb-4">Sign up to start shopping</p>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post" id="registerForm" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        {{ form.full_name }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        {{ form.phone }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        {{ form.username }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        {{ form.password1 }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        {{ form.password2 }}
+                        <div class="invalid-feedback-js text-danger small mt-1"></div>
+                        {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+
+                <p class="text-center mt-3 mb-0">
+                    Already have an account? <a href="{% url 'shop:login' %}?next={{ next }}">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("registerForm");
+    if (!form) return;
+
+    const fullName = form.querySelector("#id_full_name");
+    const email = form.querySelector("#id_email");
+    const phone = form.querySelector("#id_phone");
+    const username = form.querySelector("#id_username");
+    const password1 = form.querySelector("#id_password1");
+    const password2 = form.querySelector("#id_password2");
+
+    function showError(field, message) {
+        field.classList.add("is-invalid");
+        const box = field.parentElement.querySelector(".invalid-feedback-js");
+        if (box) box.textContent = message;
+    }
+
+    function clearError(field) {
+        field.classList.remove("is-invalid");
+        const box = field.parentElement.querySelector(".invalid-feedback-js");
+        if (box) box.textContent = "";
+    }
+
+    function validateFullName() {
+        const val = fullName.value.trim();
+        if (val.length < 3) {
+            showError(fullName, "Full name must be at least 3 characters long.");
+            return false;
+        }
+        if (!/^[A-Za-z ]+$/.test(val)) {
+            showError(fullName, "Full name can only contain letters and spaces.");
+            return false;
+        }
+        clearError(fullName);
+        return true;
+    }
+
+    function validateEmail() {
+        const val = email.value.trim();
+        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!pattern.test(val)) {
+            showError(email, "Enter a valid email address.");
+            return false;
+        }
+        clearError(email);
+        return true;
+    }
+
+    function validatePhone() {
+        const val = phone.value.trim();
+        if (!/^\d{10}$/.test(val)) {
+            showError(phone, "Phone number must be exactly 10 digits.");
+            return false;
+        }
+        if (!/^[6-9]\d{9}$/.test(val)) {
+            showError(phone, "Enter a valid 10-digit Indian mobile number.");
+            return false;
+        }
+        clearError(phone);
+        return true;
+    }
+
+    function validateUsername() {
+        const val = username.value.trim();
+        if (val.length < 4) {
+            showError(username, "Username must be at least 4 characters long.");
+            return false;
+        }
+        if (!/^[A-Za-z0-9_]+$/.test(val)) {
+            showError(username, "Username can only contain letters, numbers, and underscores.");
+            return false;
+        }
+        clearError(username);
+        return true;
+    }
+
+    function validatePassword1() {
+        const val = password1.value;
+        if (val.length < 8) {
+            showError(password1, "Password must be at least 8 characters long.");
+            return false;
+        }
+        if (!/[A-Z]/.test(val)) {
+            showError(password1, "Password must contain at least one uppercase letter.");
+            return false;
+        }
+        if (!/[0-9]/.test(val)) {
+            showError(password1, "Password must contain at least one number.");
+            return false;
+        }
+        clearError(password1);
+        return true;
+    }
+
+    function validatePassword2() {
+        if (password2.value !== password1.value || password2.value === "") {
+            showError(password2, "Passwords do not match.");
+            return false;
+        }
+        clearError(password2);
+        return true;
+    }
+
+    fullName.addEventListener("blur", validateFullName);
+    email.addEventListener("blur", validateEmail);
+    phone.addEventListener("input", () => { phone.value = phone.value.replace(/\D/g, "").slice(0, 10); });
+    phone.addEventListener("blur", validatePhone);
+    username.addEventListener("blur", validateUsername);
+    password1.addEventListener("blur", validatePassword1);
+    password2.addEventListener("blur", validatePassword2);
+
+    form.addEventListener("submit", function (e) {
+        const validations = [
+            validateFullName(),
+            validateEmail(),
+            validatePhone(),
+            validateUsername(),
+            validatePassword1(),
+            validatePassword2(),
+        ];
+        if (validations.includes(false)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

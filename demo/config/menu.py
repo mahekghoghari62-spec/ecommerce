@@ -39,6 +39,7 @@ ADMINLTE_MENU = [
     {"text": "Products", "route": "crud:product_list", "icon": "bi bi-box"},
     {"text": "Payments", "route": "crud:payment_list", "icon": "bi bi-credit-card"},
     {"text": "Warehouse", "route": "crud:warehouse_list", "icon": "bi bi-building"},
+    {"text": "Users", "route": "crud:paneluser_list", "icon": "bi bi-people"},
     {"header": "BOOST SALES"},
     {"text": "Influencer Marketing", "route": "crud:influencercampaign_list", "icon": "bi bi-person-badge"},
     {"text": "Advertisement", "route": "crud:advertisement_list", "icon": "bi bi-megaphone"},

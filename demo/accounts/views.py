@@ -19,3 +19,25 @@ def register(request):
 
 def lockscreen(request):
     return render(request, "adminlte/auth/lockscreen.html")
+
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import redirect, render
+
+
+def register(request):
+    next_url = request.GET.get("next") or "dashboard"
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            return redirect(next_url)
+    else:
+        form = UserCreationForm()
+    return render(request, "adminlte/auth/register.html", {"form": form})
+
+
+def lockscreen(request):
+    return render(request, "adminlte/auth/lockscreen.html")

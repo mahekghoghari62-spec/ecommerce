@@ -10,10 +10,10 @@ from django.views.generic import TemplateView
 from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import redirect
-from .filters import AdvertisementFilter, CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InfluencerCampaignFilter, InventoryFilter, OrderFilter, PaymentFilter, PricingFilter, ProductFilter, ProjectFilter, PromotionFilter, QualityFilter, ReturnFilter, WarehouseFilter
-from .forms import AdvertisementForm, CallbackRequestForm, CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InfluencerCampaignForm, InventoryForm, OrderForm, PaymentForm, PricingForm, ProductForm, PromotionForm, QualityForm, ReturnForm, WarehouseForm
-from .models import Advertisement, CallbackRequest, CatalogUpload, Claim, Contact, DailyMetric, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment, Pricing, Product, Project, Promotion, Quality, Return,SupportTicket, Warehouse, PayoutCycle, CompensationRecovery
-from .tables import AdvertisementTable, CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InfluencerCampaignTable, InventoryTable, OrderTable, PaymentTable, PricingTable, ProductTable, ProjectTable, PromotionTable, QualityTable, ReturnTable, WarehouseTable
+from .filters import AdvertisementFilter, CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InfluencerCampaignFilter, InventoryFilter, OrderFilter, PaymentFilter, PanelUserFilter, PricingFilter, ProductFilter, ProjectFilter, PromotionFilter, QualityFilter, ReturnFilter, WarehouseFilter
+from .forms import AdvertisementForm, CallbackRequestForm, CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InfluencerCampaignForm, InventoryForm, OrderForm, PaymentForm, PanelUserForm, PricingForm, ProductForm, PromotionForm, QualityForm, ReturnForm, WarehouseForm
+from .models import Advertisement, CallbackRequest, CatalogUpload, Claim, Contact, DailyMetric, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment,PanelUser, Pricing, Product, Project, Promotion, Quality, Return,SupportTicket, Warehouse, PayoutCycle, CompensationRecovery
+from .tables import AdvertisementTable, CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InfluencerCampaignTable, InventoryTable, OrderTable, PaymentTable, PanelUserTable, PricingTable, ProductTable, ProjectTable, PromotionTable, QualityTable, ReturnTable, WarehouseTable
 import csv
 import io
 from django.http import HttpResponse, JsonResponse
@@ -34,6 +34,7 @@ from .forms import (
     WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
     SupplierSignatureForm, EmailNotificationsForm,
 )
+from django.conf import settings
 # --- Orders: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class OrderListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     model = Order
@@ -350,8 +351,10 @@ class ClaimDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Claim for “{self.object.order.order_number}” deleted.")
         return super().form_valid(form)
-    class SupportView(LoginRequiredMixin, TemplateView):
-            template_name = "crud/support.html"
+
+
+class SupportView(LoginRequiredMixin, TemplateView):
+    template_name = "crud/support.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -710,27 +713,127 @@ class ProductListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_pagination = {"per_page": 10}
 
 
-class ProductCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
+from .forms import ProductImageFormSet, ProductVariantFormSet
+
+
+class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
     form_class = ProductForm
     template_name = "crud/product_form.html"
     success_url = reverse_lazy("crud:product_list")
 
-    def form_valid(self, form):
-        messages.success(self.request, f"Product “{form.instance.name}” created.")
-        return super().form_valid(form)
+    def is_ajax(self):
+        return self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"].helper.form_tag = False
+        if self.request.method == "POST":
+            context["image_formset"] = ProductImageFormSet(self.request.POST, self.request.FILES, prefix="images")
+            context["variant_formset"] = ProductVariantFormSet(self.request.POST, prefix="variants")
+        else:
+            context["image_formset"] = ProductImageFormSet(prefix="images")
+            context["variant_formset"] = ProductVariantFormSet(prefix="variants")
+        return context
+
+    def render_ajax(self, context, status=200):
+        html = render_to_string("crud/_modal_form.html", context, request=self.request)
+        return JsonResponse({"success": False, "html": html}, status=status)
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = self.get_form()
+        form.helper.form_tag = False
+        image_formset = ProductImageFormSet(request.POST, request.FILES, prefix="images")
+        variant_formset = ProductVariantFormSet(request.POST, prefix="variants")
+
+        if form.is_valid() and image_formset.is_valid() and variant_formset.is_valid():
+            self.object = form.save()
+            image_formset.instance = self.object
+            image_formset.save()
+            variant_formset.instance = self.object
+            variant_formset.save()
+
+            messages.success(request, f"Product “{self.object.name}” created.")
+            if self.is_ajax():
+                return JsonResponse({"success": True})
+            return redirect(self.get_success_url())
+
+        context = self.get_context_data(form=form)
+        context["image_formset"] = image_formset
+        context["variant_formset"] = variant_formset
+        if self.is_ajax():
+            return self.render_ajax(context, status=400)
+        return self.render_to_response(context)
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        context = self.get_context_data()
+        if self.is_ajax():
+            html = render_to_string("crud/_modal_form.html", context, request=request)
+            return JsonResponse({"html": html})
+        return self.render_to_response(context)
 
 
-class ProductUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = "crud/product_form.html"
     success_url = reverse_lazy("crud:product_list")
 
-    def form_valid(self, form):
-        messages.success(self.request, f"Product “{form.instance.name}” updated.")
-        return super().form_valid(form)
+    def is_ajax(self):
+        return self.request.headers.get("x-requested-with") == "XMLHttpRequest"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"].helper.form_tag = False
+        if self.request.method == "POST":
+            context["image_formset"] = ProductImageFormSet(
+                self.request.POST, self.request.FILES, instance=self.object, prefix="images"
+            )
+            context["variant_formset"] = ProductVariantFormSet(
+                self.request.POST, instance=self.object, prefix="variants"
+            )
+        else:
+            context["image_formset"] = ProductImageFormSet(instance=self.object, prefix="images")
+            context["variant_formset"] = ProductVariantFormSet(instance=self.object, prefix="variants")
+        return context
+
+    def render_ajax(self, context, status=200):
+        html = render_to_string("crud/_modal_form.html", context, request=self.request)
+        return JsonResponse({"success": False, "html": html}, status=status)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        form.helper.form_tag = False
+        image_formset = ProductImageFormSet(request.POST, request.FILES, instance=self.object, prefix="images")
+        variant_formset = ProductVariantFormSet(request.POST, instance=self.object, prefix="variants")
+
+        if form.is_valid() and image_formset.is_valid() and variant_formset.is_valid():
+            self.object = form.save()
+            image_formset.save()
+            variant_formset.save()
+
+            messages.success(request, f"Product “{self.object.name}” updated.")
+            if self.is_ajax():
+                return JsonResponse({"success": True})
+            return redirect(self.get_success_url())
+
+        context = self.get_context_data(form=form)
+        context["image_formset"] = image_formset
+        context["variant_formset"] = variant_formset
+        if self.is_ajax():
+            return self.render_ajax(context, status=400)
+        return self.render_to_response(context)
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data()
+        if self.is_ajax():
+            html = render_to_string("crud/_modal_form.html", context, request=request)
+            return JsonResponse({"html": html})
+        return self.render_to_response(context)
 
 class ProductDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     model = Product
@@ -1089,40 +1192,6 @@ class ReduceRTOReturnsView(LoginRequiredMixin, TemplateView):
         return redirect("crud:pricing_list")
 class BulkCatalogCategoryView(LoginRequiredMixin, TemplateView):
     template_name = "crud/bulk_catalog_category.html"
-class SupportView(LoginRequiredMixin, TemplateView):
-    template_name = "crud/support.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        tickets = SupportTicket.objects.all()
-        context["tickets"] = tickets
-        context["all_count"] = tickets.count()
-        context["needs_attention_count"] = tickets.filter(status="needs_attention").count()
-        context["in_progress_count"] = tickets.filter(status="in_progress").count()
-        context["closed_count"] = tickets.filter(status="closed").count()
-        context["active_tab"] = self.request.GET.get("tab", "help")
-
-        context["return_help_topics"] = [
-            "I have received wrong return", "I have received damaged return",
-            "I have not received my Return/RTO shipment", "Item/s are missing in my return",
-            "I have received a wrong barcoded package in RTO", "I have received used product as return",
-            "Return/RTO product not received but marked delivered - Need Proof of Delivery",
-            "I have an issue with Exchange order",
-            "Return/RTO Delivery Issue - False Attempt by Logistic Partner",
-            "I am not able to generate invoice for exchange order",
-            "I have received an RTO in a non-barcoded package",
-            "I am unable to raise Wrong Return / RTO claims",
-            "Order return shipping charge fee issue",
-            "When will I receive my wrong return related compensation",
-            "I want to stop using the Wrong/Defective Returns Feature",
-            "My order has been marked as Returnless Refund. What is Returnless Refund?",
-            "Other Returns/RTO and Exchange related issue",
-        ]
-        context["help_categories"] = [
-            "Cataloging & Pricing", "Orders & Delivery", "Payments", "Inventory",
-            "Account", "Advertisements & Promotions", "Instant Cash", "Others",
-        ]
-        return context
 class ImageBulkUploadPageView(LoginRequiredMixin, TemplateView):
     template_name = "crud/imagebulkupload_upload.html"
 
@@ -1442,18 +1511,7 @@ class VisitorsReportPDFView(LoginRequiredMixin, View):
         elements.append(table)
         doc.build(elements)
         return response
-# --- Add these imports at the top of crud/views.py (if not already present) ---
-# from django.contrib.auth.forms import PasswordChangeForm
-# from django.contrib.auth import update_session_auth_hash
-# from django.urls import reverse
-# from shop.models import SupplierProfile
-# from .forms import (
-#     WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
-#     SupplierSignatureForm, EmailNotificationsForm,
-# )
 
-
-# --- Settings: append this view to crud/views.py ---
 
 LEGAL_POLICIES = [
     {"slug": "additional-seller-policies", "title": "Additional Seller Policies"},
@@ -1627,3 +1685,51 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
         messages.error(request, "Unknown form submitted.")
         return redirect("crud:settings")
+
+
+# --- Panel Users: full CRUD (tables2 + django-filter + crispy form + messages) ---
+class PanelUserListView(LoginRequiredMixin, SingleTableMixin, FilterView):
+    model = PanelUser
+    table_class = PanelUserTable
+    filterset_class = PanelUserFilter
+    template_name = "crud/paneluser_list.html"
+    table_pagination = {"per_page": 10}
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("user")
+
+
+class PanelUserCreateView(AjaxModalFormMixin, LoginRequiredMixin, CreateView):
+    model = PanelUser
+    form_class = PanelUserForm
+    template_name = "crud/paneluser_form.html"
+    success_url = reverse_lazy("crud:paneluser_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"User “{form.instance.full_name}” created.")
+        return super().form_valid(form)
+
+
+class PanelUserUpdateView(AjaxModalFormMixin, LoginRequiredMixin, UpdateView):
+    model = PanelUser
+    form_class = PanelUserForm
+    template_name = "crud/paneluser_form.html"
+    success_url = reverse_lazy("crud:paneluser_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"User “{form.instance.full_name}” updated.")
+        return super().form_valid(form)
+
+
+class PanelUserDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
+    model = PanelUser
+    template_name = "crud/paneluser_confirm_delete.html"
+    success_url = reverse_lazy("crud:paneluser_list")
+
+    def form_valid(self, form):
+        full_name = self.object.full_name
+        linked_user = self.object.user
+        response = super().form_valid(form)
+        linked_user.delete()  # also revoke login access
+        messages.success(self.request, f"User “{full_name}” deleted.")
+        return response

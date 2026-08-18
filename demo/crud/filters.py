@@ -1,7 +1,7 @@
 from django import forms
 
 import django_filters as filters
-from .models import Advertisement, CatalogUpload, Claim, Company, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment, Pricing, Product, Project, Promotion, Quality, Return ,Warehouse
+from .models import Advertisement, CatalogUpload, Claim, Company, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment,Pricing, Product, Project, Promotion, Quality, Return ,Warehouse, PanelUser
 class OrderFilter(filters.FilterSet):
     order_number = filters.CharFilter(
         lookup_expr="icontains",
@@ -285,3 +285,22 @@ class PromotionFilter(filters.FilterSet):
     class Meta:
         model = Promotion
         fields = ["event_name", "promotion_type", "status"]
+
+
+class PanelUserFilter(filters.FilterSet):
+    full_name = filters.CharFilter(
+        field_name="full_name", lookup_expr="icontains",
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Search by name"}),
+    )
+    role = filters.ChoiceFilter(
+        choices=PanelUser.ROLE_CHOICES, empty_label="All roles",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    status = filters.ChoiceFilter(
+        choices=PanelUser.STATUS_CHOICES, empty_label="All statuses",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    class Meta:
+        model = PanelUser
+        fields = ["full_name", "role", "status"]

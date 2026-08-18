@@ -1,0 +1,149 @@
+{% extends "shop/base_shop.html" %}
+{% load shop_extras %}
+
+{% block title %}{{ category_label }} - MyShop{% endblock %}
+
+{% block content %}
+
+<style>
+    .msh-cat-banner {
+        background: linear-gradient(120deg, #C2185B 0%, #9F2089 55%, #6E1560 100%);
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.75rem;
+    }
+    .msh-cat-banner::after {
+        content: "";
+        position: absolute;
+        right: -60px;
+        top: -60px;
+        width: 220px;
+        height: 220px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+    .msh-cat-banner h1 { font-weight: 800; letter-spacing: -0.5px; }
+    .msh-cat-banner p { opacity: 0.92; margin-bottom: 0; }
+
+    .msh-count-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #444;
+        margin-bottom: 0.9rem;
+    }
+
+    .msh-card {
+        border: 1px solid #eee;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        transition: box-shadow .15s ease, transform .15s ease;
+        position: relative;
+    }
+    .msh-card:hover {
+        box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+    .msh-card-img-wrap { position: relative; background: #fafafa; }
+    .msh-card-img-wrap img,
+    .msh-card-img-wrap .msh-img-placeholder {
+        width: 100%;
+        height: 190px;
+        object-fit: cover;
+    }
+    .msh-img-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f4f4;
+    }
+    .msh-discount-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: var(--meesho-pink);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 3px 7px;
+        border-radius: 5px;
+    }
+    .msh-card-body { padding: 0.7rem 0.75rem 0.85rem; }
+    .msh-card-title {
+        font-size: 0.85rem;
+        color: #222;
+        margin-bottom: 0.15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .msh-card-category { font-size: 0.7rem; color: #9a9a9a; margin-bottom: 0.35rem; }
+    .msh-price-row { display: flex; align-items: baseline; gap: 0.4rem; margin-bottom: 0.15rem; }
+    .msh-price { font-weight: 800; font-size: 0.98rem; color: #222; }
+    .msh-mrp { font-size: 0.78rem; color: #9a9a9a; text-decoration: line-through; }
+    .msh-off { font-size: 0.78rem; color: #1a9e5c; font-weight: 700; }
+    .msh-delivery { font-size: 0.68rem; color: #1a9e5c; margin-bottom: 0.5rem; }
+    .msh-delivery i { margin-right: 2px; }
+    .msh-empty {
+        text-align: center;
+        color: #999;
+        padding: 2rem 0;
+        font-size: 0.9rem;
+    }
+</style>
+
+<!-- Category banner -->
+<div class="msh-cat-banner">
+    <h1 class="display-6">{{ category_label }}</h1>
+    <p class="lead">Best deals on {{ category_label }} — up to 50% off</p>
+</div>
+
+<div class="msh-count-title">{{ products.count }} products in {{ category_label }}</div>
+
+<div class="row g-3">
+    {% for product in products %}
+    <div class="col-6 col-md-3">
+        <div class="msh-card h-100 d-flex flex-column">
+            <div class="msh-card-img-wrap">
+                {% if product.discount_percent %}
+                    <span class="msh-discount-badge">{{ product.discount_percent }}% OFF</span>
+                {% endif %}
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <div class="msh-img-placeholder">
+                        <i class="bi bi-image fs-1 text-secondary"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="msh-card-body flex-grow-1 d-flex flex-column">
+                <div class="msh-card-title">{{ product.name }}</div>
+                <div class="msh-card-category">{{ product.get_category_display }}</div>
+
+                <div class="msh-price-row">
+                    <span class="msh-price">₹{{ product.selling_price }}</span>
+                    {% if product.mrp %}
+                        <span class="msh-mrp">₹{{ product.mrp }}</span>
+                    {% endif %}
+                    {% if product.discount_percent %}
+                        <span class="msh-off">{{ product.discount_percent }}% off</span>
+                    {% endif %}
+                </div>
+                <div class="msh-delivery"><i class="bi bi-truck"></i>Free Delivery</div>
+
+                <form action="{% url 'shop:add_to_cart' product.id %}" method="post" class="mt-auto">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-msh w-100">Add to Cart</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="msh-empty">No products in this category yet.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

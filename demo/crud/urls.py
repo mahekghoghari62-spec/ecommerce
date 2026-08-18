@@ -127,4 +127,10 @@ urlpatterns = [
     path("reports/visitors/excel/", views.VisitorsReportExcelView.as_view(), name="visitors_report_excel"),
     path("reports/visitors/pdf/", views.VisitorsReportPDFView.as_view(), name="visitors_report_pdf"),
     path("settings/", views.SettingsView.as_view(), name="settings"),
+
+    # Panel Users (full CRUD)
+    path("users/", views.PanelUserListView.as_view(), name="paneluser_list"),
+    path("users/new/", views.PanelUserCreateView.as_view(), name="paneluser_create"),
+    path("users/<int:pk>/edit/", views.PanelUserUpdateView.as_view(), name="paneluser_update"),
+    path("users/<int:pk>/delete/", views.PanelUserDeleteView.as_view(), name="paneluser_delete"),
 ]

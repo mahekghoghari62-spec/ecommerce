@@ -1,7 +1,7 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from .models import Advertisement, CatalogUpload, Claim, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order,Payment, Pricing, Project, Product,Promotion, Quality, Return, Warehouse
+from .models import Advertisement, CatalogUpload, Claim, Contact, ImageBulkUpload, InfluencerCampaign, Inventory, Order,Payment,PanelUser, Pricing, Project, Product,Promotion, Quality, Return, Warehouse
 DATETIME_FMT = "d/m/Y, h:i A"
 DATE_FMT = "d/m/Y"
 _PROJECT_STATUS_CLASS = {
@@ -507,3 +507,34 @@ class PromotionTable(tables.Table):
 
     def render_promotion_type(self, record):
         return record.get_promotion_type_display()
+# ============================================================
+# ADD THESE IMPORTS TO THE TOP OF crud/tables.py:
+# from django.utils.html import format_html
+# from .models import PanelUser   (add PanelUser to your existing models import)
+#
+# THEN ADD THIS CLASS TO THE END OF crud/tables.py
+# ============================================================
+
+
+class PanelUserTable(tables.Table):
+    full_name = tables.Column(verbose_name="Name")
+    username = tables.Column(accessor="user__username", verbose_name="Username", orderable=False)
+    email = tables.Column(accessor="user__email", verbose_name="Email", orderable=False)
+    role = tables.Column()
+    status = tables.Column()
+    actions = tables.TemplateColumn(
+        template_name="crud/_paneluser_actions.html",
+        orderable=False,
+        verbose_name="",
+    )
+
+    class Meta:
+        model = PanelUser
+        fields = ("full_name", "username", "email", "role", "status", "actions")
+        attrs = {"class": "table table-hover align-middle"}
+
+    def render_role(self, record):
+        return format_html('<span class="badge bg-{}">{}</span>', record.role_color, record.get_role_display())
+
+    def render_status(self, record):
+        return format_html('<span class="badge bg-{}">{}</span>', record.status_color, record.get_status_display())

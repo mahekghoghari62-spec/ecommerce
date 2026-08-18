@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from dashboard import urls as dashboard_urls
 from accounts import urls as accounts_urls
 from demo.config import settings
-
+from shop import urls as shop_urls 
 urlpatterns = [
     # Language switching for the topbar dropdown (set_language).
     path("i18n/", include("django.conf.urls.i18n")),
@@ -17,6 +17,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),  # AdminLTE-themed allauth pages
     path("", include(accounts_urls)),
     path("", include(dashboard_urls)),
+    path("shop/", include((shop_urls, "shop"), namespace="shop")),
     
 ]
 if settings.DEBUG:
