@@ -1,0 +1,24 @@
+{% extends "shop/base_shop.html" %}
+
+{% block title %}{{ policy.title|default:"Policy" }} - MyShop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="bg-white rounded p-4 p-md-5 shadow-sm">
+            {% if policy %}
+                <h2 class="fw-bold mb-4" style="color: var(--meesho-pink);">{{ policy.title }}</h2>
+                {% for para in policy_body %}
+                    <p class="text-secondary" style="line-height: 1.8;">{{ para }}</p>
+                {% empty %}
+                    <p class="text-muted">Details for this policy will be published soon.</p>
+                {% endfor %}
+            {% else %}
+                <h2 class="fw-bold mb-3">Page not found</h2>
+                <p class="text-muted">The policy you're looking for doesn't exist.</p>
+                <a href="{% url 'shop:home' %}" class="btn" style="background: var(--meesho-pink); color: #fff;">Back to Home</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -18,3 +18,15 @@ admin.site.register(Category)
 admin.site.register(Product)
 admin.site.register(Customer)
 admin.site.register(SiteVisit)
+from .models import SiteSettings
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ("category_mode",)
+
+    def has_add_permission(self, request):
+        # Only one row should ever exist.
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

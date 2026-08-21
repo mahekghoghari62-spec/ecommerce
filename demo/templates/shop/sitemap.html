@@ -1,0 +1,39 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Sitemap | My Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold mb-4" style="color: var(--meesho-pink-dark);">Sitemap</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="msh-footer-heading text-uppercase small fw-bold text-muted">About</div>
+                        <a href="{% url 'shop:contact_us' %}" class="d-block mb-2">Contact Us</a>
+                        <a href="{% url 'shop:about_us' %}" class="d-block mb-2">About Us</a>
+                        <a href="{% url 'shop:careers' %}" class="d-block mb-2">Careers</a>
+                        <a href="{% url 'shop:myshop_stories' %}" class="d-block mb-2">MyShop Stories</a>
+                        <a href="{% url 'shop:press' %}" class="d-block mb-2">Press</a>
+                        <a href="{% url 'shop:corporate_information' %}" class="d-block mb-2">Corporate Information</a>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="msh-footer-heading text-uppercase small fw-bold text-muted">Help</div>
+                        <a href="{% url 'shop:payments' %}" class="d-block mb-2">Payments</a>
+                        <a href="{% url 'shop:policy_detail' 'logistics-policy' %}" class="d-block mb-2">Shipping</a>
+                        <a href="{% url 'shop:policy_detail' 'return-claims-policy' %}" class="d-block mb-2">Cancellation &amp; Returns</a>
+                        <a href="{% url 'shop:faq' %}" class="d-block mb-2">FAQ</a>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="msh-footer-heading text-uppercase small fw-bold text-muted">Consumer Policy</div>
+                        <a href="{% url 'shop:policy_detail' 'terms-and-conditions' %}" class="d-block mb-2">Terms Of Use</a>
+                        <a href="{% url 'shop:policy_detail' 'anti-phishing-policy' %}" class="d-block mb-2">Security</a>
+                        <a href="{% url 'shop:policy_detail' 'privacy-policy' %}" class="d-block mb-2">Privacy</a>
+                        <a href="{% url 'shop:grievance_redressal' %}" class="d-block mb-2">Grievance Redressal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

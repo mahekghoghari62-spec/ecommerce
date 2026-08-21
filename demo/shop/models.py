@@ -1,18 +1,49 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    parent = models.ForeignKey(
+        "self", null=True, blank=True,
+        on_delete=models.CASCADE, related_name="children"
+    )
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name_plural = "Categories"
+        ordering = ["order", "name"]
 
     def __str__(self):
-        return self.name
+        return f"{self.parent} > {self.name}" if self.parent_id else self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            i = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                i += 1
+                slug = f"{base_slug}-{i}"
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def get_descendant_ids(self):
+        """This category's id + all nested children ids (used for category-mode filtering)."""
+        ids = [self.id]
+        for child in self.children.all():
+            ids += child.get_descendant_ids()
+        return ids
 
 
 class Product(models.Model):
+    supplier = models.ForeignKey(
+        "SupplierProfile", on_delete=models.CASCADE,
+        null=True, blank=True, related_name="products"
+    )
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -67,8 +98,17 @@ class SiteVisit(models.Model):
     visited_at = models.DateTimeField(auto_now_add=True)
     path = models.CharField(max_length=255, blank=True)
 
+
 class SupplierProfile(models.Model):
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="supplier_profile")
+
+    CATEGORY_MODE_CHOICES = [
+        ("single", "Single Category (Clothes only)"),
+        ("multiple", "Multiple Category"),
+    ]
+    category_mode = models.CharField(
+        max_length=10, choices=CATEGORY_MODE_CHOICES, default="multiple"
+    )
 
     # WhatsApp Notifications
     whatsapp_number = models.CharField(max_length=15, blank=True)
@@ -97,6 +137,8 @@ class SupplierProfile(models.Model):
 
     def __str__(self):
         return f"Profile — {self.user.username}"
+
+
 class CustomerProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="customer_profile")
     phone = models.CharField(max_length=15, blank=True)
@@ -130,10 +172,6 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.full_name} — {self.city}"
-# ============================================================
-# ADD THIS BLOCK TO THE END OF shop/models.py
-# (keep existing imports: from django.conf import settings, from django.db import models)
-# ============================================================
 
 
 class Cart(models.Model):
@@ -177,3 +215,26 @@ class CartItem(models.Model):
     @property
     def line_total(self):
         return self.product.price * self.quantity
+class SiteSettings(models.Model):
+    """Single site-wide row controlling whether the public shop nav shows
+    only Clothes or all categories, independent of any one supplier."""
+
+    CATEGORY_MODE_CHOICES = [
+        ("single", "Single Category (Clothes only)"),
+        ("multiple", "Multiple Category"),
+    ]
+    category_mode = models.CharField(
+        max_length=10, choices=CATEGORY_MODE_CHOICES, default="multiple"
+    )
+
+    class Meta:
+        verbose_name = "Site Settings"
+        verbose_name_plural = "Site Settings"
+
+    def __str__(self):
+        return f"Site Settings ({self.get_category_mode_display()})"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

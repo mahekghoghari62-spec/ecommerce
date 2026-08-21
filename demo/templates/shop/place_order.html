@@ -8,6 +8,8 @@
     {% endfor %}
 {% endif %}
 
+<div id="razorpayErrorBox" class="alert alert-danger py-2 d-none"></div>
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card shadow-sm mb-3">
@@ -96,7 +98,7 @@
                     <span>₹{{ subtotal }}</span>
                 </div>
                 {% if addresses %}
-                <button type="submit" form="placeOrderForm" class="btn btn-warning w-100 fw-bold mt-3">
+                <button type="submit" form="placeOrderForm" id="confirmOrderBtn" class="btn btn-warning w-100 fw-bold mt-3">
                     Confirm Order
                 </button>
                 {% else %}
@@ -113,26 +115,56 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('placeOrderForm');
+    var errorBox = document.getElementById('razorpayErrorBox');
+    var confirmBtn = document.getElementById('confirmOrderBtn');
     if (!form) return;
 
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setLoading(isLoading) {
+        if (!confirmBtn) return;
+        confirmBtn.disabled = isLoading;
+        confirmBtn.textContent = isLoading ? 'Processing...' : 'Confirm Order';
+    }
+
     form.addEventListener('submit', function (e) {
+        errorBox.classList.add('d-none');
         var selected = document.querySelector('input[name="payment_method"]:checked');
         if (!selected) return;
 
         if (selected.value === 'cod') {
-            return; // normal submit, COD ne gateway ni jarur nathi
+            return; // normal submit, COD needs no gateway
         }
 
         e.preventDefault();
+
+        if (typeof Razorpay === 'undefined') {
+            showError('Payment gateway could not load (checkout.razorpay.com may be blocked on this network). Please try Cash on Delivery, or check your internet/firewall settings.');
+            return;
+        }
+
+        setLoading(true);
 
         fetch("{% url 'shop:create_razorpay_order' %}", {
             method: "POST",
             headers: { "X-CSRFToken": "{{ csrf_token }}" },
         })
-        .then(function (res) { return res.json(); })
+        .then(function (res) {
+            if (!res.ok) {
+                return res.text().then(function (text) {
+                    throw new Error('Server error (' + res.status + '). ' + text.slice(0, 200));
+                });
+            }
+            return res.json();
+        })
         .then(function (data) {
+            setLoading(false);
             if (!data.success) {
-                alert(data.error || "Could not initiate payment.");
+                showError(data.error || "Could not initiate payment. Please try again or use Cash on Delivery.");
                 return;
             }
 
@@ -163,7 +195,14 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                showError('Payment failed: ' + (response.error && response.error.description ? response.error.description : 'Unknown error'));
+            });
             rzp.open();
+        })
+        .catch(function (err) {
+            setLoading(false);
+            showError('Something went wrong while starting payment: ' + err.message + '. You can try Cash on Delivery instead.');
         });
     });
 });

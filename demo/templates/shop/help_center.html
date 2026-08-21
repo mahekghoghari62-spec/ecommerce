@@ -1,0 +1,41 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Help Center | My Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold mb-4" style="color: var(--meesho-pink-dark);">Help Center</h2>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-box-seam" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-1">Orders</div>
+                            <div class="text-muted small">Track, cancel, or modify</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-arrow-return-left" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-1">Returns</div>
+                            <div class="text-muted small">Start a return or exchange</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-person-gear" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-1">Account</div>
+                            <div class="text-muted small">Login, password &amp; profile</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted mb-0">
+                    Still stuck? Email us at <a href="mailto:support@myshop.example">support@myshop.example</a>
+                    and we'll get back to you within 24 hours.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

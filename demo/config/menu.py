@@ -36,6 +36,7 @@ ADMINLTE_MENU = [
     {"text": "Catalog Uploads", "route": "crud:catalogupload_list", "icon": "bi bi-cloud-upload"},
     {"text": "Image Bulk Uploads", "route": "crud:imagebulkupload_list", "icon": "bi bi-cloud-upload"},
     {"text": "Quality", "route": "crud:quality_list", "icon": "bi bi-clipboard-check"},
+    {"text": "Categories", "route": "crud:category_settings", "icon": "bi bi-diagram-3"},
     {"text": "Products", "route": "crud:product_list", "icon": "bi bi-box"},
     {"text": "Payments", "route": "crud:payment_list", "icon": "bi bi-credit-card"},
     {"text": "Warehouse", "route": "crud:warehouse_list", "icon": "bi bi-building"},

@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from crud.models import PanelUser
+from shop.models import CustomerProfile
+
 
 class AllauthThemeTests(TestCase):
     """The package's AdminLTE-themed allauth layouts/elements render + work."""
@@ -42,9 +45,82 @@ class DemoLoginPageTests(TestCase):
         self.assertIn("Demo account", html)            # credentials callout
         self.assertIn("Django admin", html)            # structure tour
 
-    def test_authenticated_user_redirected_away_from_login(self):
+    def test_authenticated_user_can_switch_to_admin_login(self):
         get_user_model().objects.create_user("tester", password="pw-12345!")
         self.client.login(username="tester", password="pw-12345!")
         resp = self.client.get(reverse("login"))
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, reverse(settings.LOGIN_REDIRECT_URL))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_customer_cannot_login_to_admin_panel(self):
+        customer = get_user_model().objects.create_user("customer", password="pw-12345!")
+        CustomerProfile.objects.create(user=customer)
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": "customer", "password": "pw-12345!"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_panel_user_cannot_login_to_shop(self):
+        panel_user = get_user_model().objects.create_user(
+            "panel", password="pw-12345!", is_staff=True
+        )
+        PanelUser.objects.create(user=panel_user, full_name="Panel User")
+
+        response = self.client.post(
+            reverse("shop:login"),
+            {"username": "panel", "password": "pw-12345!"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_non_staff_account_can_login_to_shop(self):
+        get_user_model().objects.create_user("shopuser", password="pw-12345!")
+
+        response = self.client.post(
+            reverse("shop:login"),
+            {"username": "shopuser", "password": "pw-12345!"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("shop:home"))
+
+    def test_panel_user_can_login_to_admin_panel(self):
+        panel_user = get_user_model().objects.create_user(
+            "panel", password="pw-12345!", is_staff=True
+        )
+        PanelUser.objects.create(user=panel_user, full_name="Panel User")
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": "panel", "password": "pw-12345!"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse(settings.LOGIN_REDIRECT_URL))
+
+    def test_staff_session_is_removed_when_opening_shop(self):
+        panel_user = get_user_model().objects.create_user(
+            "panel", password="pw-12345!", is_staff=True
+        )
+        PanelUser.objects.create(user=panel_user, full_name="Panel User")
+        self.client.force_login(panel_user)
+
+        response = self.client.get(reverse("shop:home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_legacy_logout_post_works_with_stale_page(self):
+        user = get_user_model().objects.create_user("legacy", password="pw-12345!")
+        self.client.force_login(user)
+        csrf_client = self.client.__class__(enforce_csrf_checks=True)
+        csrf_client.cookies = self.client.cookies
+
+        response = csrf_client.post(reverse("logout"))
+
+        self.assertRedirects(response, reverse("login"))
+        self.assertNotIn("_auth_user_id", csrf_client.session)

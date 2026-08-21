@@ -192,13 +192,17 @@ DJANGO_VITE = {
 }
 
 # --- Auth ---
-LOGIN_URL = "login"
+# --- Auth ---
+LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
-# Public demo: every visitor starts logged out — the session ends when the
-# browser closes, so a shared/bookmarked demo never resumes another visit.
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ACCOUNT_LOGIN_REDIRECT_URL = "shop:home"
 
+# Session should persist across browser restarts too — login once, stay
+# logged in until SESSION_COOKIE_AGE expires or user logs out manually.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14   # 14 days (adjust as needed)
+SESSION_SAVE_EVERY_REQUEST = True         # refreshes expiry on each request
 # Theme every django-tables2 table with the AdminLTE card wrapper.
 DJANGO_TABLES2_TEMPLATE = "django_tables2/adminlte.html"
 

@@ -127,6 +127,7 @@ urlpatterns = [
     path("reports/visitors/excel/", views.VisitorsReportExcelView.as_view(), name="visitors_report_excel"),
     path("reports/visitors/pdf/", views.VisitorsReportPDFView.as_view(), name="visitors_report_pdf"),
     path("settings/", views.SettingsView.as_view(), name="settings"),
+    path("categories/", views.CategorySettingsView.as_view(), name="category_settings"),
 
     # Panel Users (full CRUD)
     path("users/", views.PanelUserListView.as_view(), name="paneluser_list"),

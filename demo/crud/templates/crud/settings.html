@@ -19,6 +19,9 @@
       <a href="?tab=whatsapp" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'whatsapp' %}active{% endif %}">
         <i class="bi bi-whatsapp me-2"></i>WhatsApp Notifications
       </a>
+      <a href="?tab=category_mode" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'category_mode' %}active{% endif %}">
+        <i class="bi bi-diagram-3 me-2"></i>Product Categories
+      </a>
       <a href="?tab=bank" class="settings-menu-item list-group-item list-group-item-action {% if active_tab == 'bank' %}active{% endif %}">
         <i class="bi bi-bank me-2"></i>Bank Details
       </a>
@@ -227,6 +230,16 @@
           }
         });
       </script>
+
+    {% elif active_tab == 'category_mode' %}
+      <h4 class="mb-2">Product Category Mode</h4>
+      <p class="text-muted mb-4">Choose which category tree is available when you create products.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="category_mode">
+        {{ category_mode_form.category_mode|as_crispy_field }}
+        <button type="submit" class="btn btn-primary mt-3">Save Category Mode</button>
+      </form>
 
     {% elif active_tab == 'bank' %}
       <h4 class="mb-4">Bank Details</h4>

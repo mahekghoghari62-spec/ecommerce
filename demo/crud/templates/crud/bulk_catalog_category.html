@@ -17,29 +17,19 @@
   </div>
   <a href="{% url 'crud:support' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-headset me-1"></i>{% trans 'Need Help?' %}</a>
 </div>
+
 <div class="crud-card">
   <label class="form-label fw-bold">{% trans 'Search Category' %}</label>
   <div class="input-group mb-4" style="max-width:420px;">
     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-    <input type="text" class="form-control" placeholder="{% trans 'Try Sarees, Toys, Charger, Mugs and more…' %}">
+    <input type="text" class="form-control" id="categorySearchInput" placeholder="{% trans 'Try Sarees, Toys, Charger, Mugs and more…' %}">
   </div>
 
-  <div class="row">
-    <div class="col-md-3">
-      <div class="list-group" id="mainCategoryList"></div>
-      <div class="small text-muted mt-2">
-        {% trans "Can't find the category?" %} <a href="#">{% trans 'Search Category' %}</a>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="list-group" id="subCategoryList"></div>
-    </div>
-    <div class="col-md-3">
-      <div class="list-group" id="leafCategoryList"></div>
-    </div>
-    <div class="col-md-3">
-      <div id="finalCategoryArea"></div>
-    </div>
+  <div class="row" id="categoryColumns">
+    <!-- columns get injected here dynamically by JS -->
+  </div>
+  <div class="small text-muted mt-2">
+    {% trans "Can't find the category?" %} <a href="#">{% trans 'Search Category' %}</a>
   </div>
 </div>
 
@@ -56,163 +46,113 @@
 </div>
 <script src="{% static 'js/crud-modals.js' %}"></script>
 
+{{ category_data|json_script:"category-data" }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const CREATE_URL = "{% url 'crud:catalogupload_create' %}";
+  const CATEGORY_TREE = JSON.parse(document.getElementById('category-data').textContent);
 
-  const CATEGORY_DATA = {
-    your: {
-      label: "{% trans 'Your Categories' %}",
-      leafOnly: ["{% trans 'Gowns - Ethnic' %}"],
-    },
-    men: {
-      label: "{% trans 'Men Fashion' %}",
-      children: {
-        clothing: { label: "{% trans 'Mens Clothing' %}", leaf: ["{% trans 'T-Shirts' %}", "{% trans 'Shirts' %}", "{% trans 'Jeans' %}"] },
-        footwear: { label: "{% trans 'Footwear' %}", leaf: ["{% trans 'Shoes' %}", "{% trans 'Flipflops & Slippers' %}", "{% trans 'Sandals & Floaters' %}", "{% trans 'Ethnic Footwear' %}", "{% trans 'Shoe Accessories' %}"] },
-        accessories: { label: "{% trans 'Accessories' %}", leaf: ["{% trans 'Belts' %}", "{% trans 'Wallets' %}", "{% trans 'Watches' %}"] },
-      },
-    },
-    women: {
-      label: "{% trans 'Women Fashion' %}",
-      children: {
-        ethnic: { label: "{% trans 'Gowns - Ethnic' %}", leaf: ["{% trans 'Anarkali Gowns' %}", "{% trans 'Party Gowns' %}", "{% trans 'Maxi Gowns' %}"] },
-        sarees: { label: "{% trans 'Sarees' %}", leaf: ["{% trans 'Cotton Sarees' %}", "{% trans 'Silk Sarees' %}", "{% trans 'Printed Sarees' %}"] },
-        kurtis: { label: "{% trans 'Kurtis' %}", leaf: ["{% trans 'Straight Kurtis' %}", "{% trans 'A-Line Kurtis' %}"] },
-        footwear: { label: "{% trans 'Footwear' %}", leaf: ["{% trans 'Heels' %}", "{% trans 'Flats' %}", "{% trans 'Sandals' %}"] },
-      },
-    },
-    home: {
-      label: "{% trans 'Home & Living' %}",
-      children: {
-        decor: { label: "{% trans 'Home Decor' %}", leaf: ["{% trans 'Wall Art' %}", "{% trans 'Vases' %}"] },
-        kitchen: { label: "{% trans 'Kitchen & Dining' %}", leaf: ["{% trans 'Cookware' %}", "{% trans 'Dinnerware' %}"] },
-        furnishing: { label: "{% trans 'Furnishing' %}", leaf: ["{% trans 'Bedsheets' %}", "{% trans 'Curtains' %}"] },
-      },
-    },
-    kids: {
-      label: "{% trans 'Kids & Toys' %}",
-      children: {
-        toys: { label: "{% trans 'Toys' %}", leaf: ["{% trans 'Educational Toys' %}", "{% trans 'Soft Toys' %}"] },
-        clothing: { label: "{% trans 'Kids Clothing' %}", leaf: ["{% trans 'Boys Wear' %}", "{% trans 'Girls Wear' %}"] },
-      },
-    },
-    personal: {
-      label: "{% trans 'Personal Care & Wellness' %}",
-      children: {
-        skin: { label: "{% trans 'Skin Care' %}", leaf: ["{% trans 'Face Wash' %}", "{% trans 'Moisturizers' %}"] },
-        hair: { label: "{% trans 'Hair Care' %}", leaf: ["{% trans 'Shampoo' %}", "{% trans 'Oils' %}"] },
-      },
-    },
-    mobiles: {
-      label: "{% trans 'Mobiles & Tablets' %}",
-      children: {
-        mobiles: { label: "{% trans 'Mobiles' %}", leaf: ["{% trans 'Smartphones' %}", "{% trans 'Feature Phones' %}"] },
-        tablets: { label: "{% trans 'Tablets' %}", leaf: ["{% trans 'Android Tablets' %}", "{% trans 'iPads' %}"] },
-      },
-    },
-    electronics: {
-      label: "{% trans 'Consumer Electronics' %}",
-      children: {
-        audio: { label: "{% trans 'Audio' %}", leaf: ["{% trans 'Headphones' %}", "{% trans 'Speakers' %}"] },
-        cameras: { label: "{% trans 'Cameras' %}", leaf: ["{% trans 'DSLR' %}", "{% trans 'Action Cameras' %}"] },
-      },
-    },
-  };
+  const columnsWrap = document.getElementById('categoryColumns');
+  const searchInput = document.getElementById('categorySearchInput');
 
-  const mainList = document.getElementById('mainCategoryList');
-  const subList = document.getElementById('subCategoryList');
-  const leafList = document.getElementById('leafCategoryList');
-  const finalArea = document.getElementById('finalCategoryArea');
+  // path[] holds the chain of selected node objects at each depth
+  let path = [];
 
-  function clearNode(node) { node.innerHTML = ''; }
+  function makeColumn(nodes, depth) {
+    const col = document.createElement('div');
+    col.className = 'col-md-3';
+    const group = document.createElement('div');
+    group.className = 'list-group';
+    col.appendChild(group);
 
-  function renderMain() {
-    clearNode(mainList);
-    Object.keys(CATEGORY_DATA).forEach(function (key, idx) {
-      const cat = CATEGORY_DATA[key];
-      const a = document.createElement('a');
-      a.href = '#';
-      a.className = 'list-group-item list-group-item-action' + (idx === 0 ? ' active' : '');
-      a.textContent = cat.label;
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        [...mainList.children].forEach(el => el.classList.remove('active'));
-        a.classList.add('active');
-        renderSub(key);
-      });
-      mainList.appendChild(a);
-    });
-  }
-
-  function renderSub(mainKey) {
-    clearNode(subList);
-    clearNode(leafList);
-    clearNode(finalArea);
-    const cat = CATEGORY_DATA[mainKey];
-
-    if (cat.leafOnly) {
-      cat.leafOnly.forEach(function (name) {
-        const a = document.createElement('a');
-        a.href = '#';
-        a.className = 'list-group-item list-group-item-action';
-        a.textContent = name;
-        a.addEventListener('click', function (e) {
-          e.preventDefault();
-          showFinal(name, cat.label);
-        });
-        subList.appendChild(a);
-      });
-      return;
-    }
-
-    Object.keys(cat.children).forEach(function (subKey, idx) {
-      const sub = cat.children[subKey];
+    nodes.forEach(function (node) {
       const a = document.createElement('a');
       a.href = '#';
       a.className = 'list-group-item list-group-item-action';
-      a.textContent = sub.label;
+      a.textContent = node.name;
       a.addEventListener('click', function (e) {
         e.preventDefault();
-        [...subList.children].forEach(el => el.classList.remove('active'));
+        [...group.children].forEach(el => el.classList.remove('active'));
         a.classList.add('active');
-        renderLeaf(sub);
+        selectNode(node, depth);
       });
-      subList.appendChild(a);
+      group.appendChild(a);
     });
+
+    return col;
   }
 
-  function renderLeaf(sub) {
-    clearNode(leafList);
-    clearNode(finalArea);
-    sub.leaf.forEach(function (name) {
-      const a = document.createElement('a');
-      a.href = '#';
-      a.className = 'list-group-item list-group-item-action';
-      a.textContent = name;
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        [...leafList.children].forEach(el => el.classList.remove('active'));
-        a.classList.add('active');
-        showFinal(name, sub.label);
-      });
-      leafList.appendChild(a);
-    });
-  }
-
-  function showFinal(name, parentLabel) {
-    finalArea.innerHTML = `
-      <div class="border rounded p-3 d-flex align-items-center gap-3" style="cursor:pointer;" data-modal-url="${CREATE_URL}" data-modal-title="New catalog upload">
+  function showFinalCard(node, parentLabel, depth) {
+    const col = document.createElement('div');
+    col.className = 'col-md-3';
+    col.innerHTML = `
+      <div class="border rounded p-3 d-flex align-items-center gap-3" style="cursor:pointer;"
+           data-modal-url="${CREATE_URL}?category_id=${node.id}"
+           data-modal-title="New catalog upload">
         <i class="bi bi-image" style="font-size:1.5rem; color:#7c3aed;"></i>
         <div>
-          <div class="fw-bold">${name}</div>
-          <div class="small text-muted">In ${parentLabel}</div>
+          <div class="fw-bold">${node.name}</div>
+          <div class="small text-muted">${parentLabel ? 'In ' + parentLabel : ''}</div>
         </div>
       </div>`;
+    columnsWrap.appendChild(col);
   }
 
-  renderMain();
-  renderSub('your');
+  function selectNode(node, depth) {
+    path = path.slice(0, depth);
+    path.push(node);
+    renderColumns();
+  }
+
+  function renderColumns() {
+    columnsWrap.innerHTML = '';
+    columnsWrap.appendChild(makeColumn(CATEGORY_TREE, 0));
+
+    path.forEach(function (node, idx) {
+      if (node.children && node.children.length) {
+        columnsWrap.appendChild(makeColumn(node.children, idx + 1));
+      } else {
+        const parentLabel = idx > 0 ? path[idx - 1].name : '';
+        showFinalCard(node, parentLabel, idx + 1);
+      }
+    });
+  }
+
+  searchInput.addEventListener('input', function () {
+    const term = searchInput.value.trim().toLowerCase();
+    if (!term) { renderColumns(); return; }
+
+    function search(nodes, trail) {
+      let matches = [];
+      nodes.forEach(function (n) {
+        if (n.name.toLowerCase().includes(term)) matches.push({ node: n, trail });
+        if (n.children) matches = matches.concat(search(n.children, trail.concat(n.name)));
+      });
+      return matches;
+    }
+    const results = search(CATEGORY_TREE, []);
+
+    columnsWrap.innerHTML = '';
+    const col = document.createElement('div');
+    col.className = 'col-md-6';
+    const group = document.createElement('div');
+    group.className = 'list-group';
+    results.forEach(function (r) {
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action';
+      a.innerHTML = `${r.node.name} <span class="small text-muted">(${r.trail.join(' > ')})</span>`;
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        showFinalCard(r.node, r.trail[r.trail.length - 1] || '', 1);
+      });
+      group.appendChild(a);
+    });
+    col.appendChild(group);
+    columnsWrap.appendChild(col);
+  });
+
+  renderColumns();
 });
 </script>
 {% endblock %}

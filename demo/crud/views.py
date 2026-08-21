@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, TemplateView,UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, RedirectView, TemplateView,UpdateView
 from django.db import models
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin
@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from .filters import AdvertisementFilter, CatalogUploadFilter, ClaimFilter, ContactFilter, ImageBulkUploadFilter, InfluencerCampaignFilter, InventoryFilter, OrderFilter, PaymentFilter, PanelUserFilter, PricingFilter, ProductFilter, ProjectFilter, PromotionFilter, QualityFilter, ReturnFilter, WarehouseFilter
 from .forms import AdvertisementForm, CallbackRequestForm, CatalogUploadForm, ClaimForm, ContactForm, ImageBulkUploadForm, InfluencerCampaignForm, InventoryForm, OrderForm, PaymentForm, PanelUserForm, PricingForm, ProductForm, PromotionForm, QualityForm, ReturnForm, WarehouseForm
-from .models import Advertisement, CallbackRequest, CatalogUpload, Claim, Contact, DailyMetric, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment,PanelUser, Pricing, Product, Project, Promotion, Quality, Return,SupportTicket, Warehouse, PayoutCycle, CompensationRecovery
+from .models import Advertisement, CallbackRequest, CatalogUpload, Category, Claim, Contact, DailyMetric, ImageBulkUpload, InfluencerCampaign, Inventory, Order, Payment, PanelUser, Pricing, Product, ProductImage, Project, Promotion, Quality, Return, SupportTicket, Warehouse, PayoutCycle, CompensationRecovery
 from .tables import AdvertisementTable, CatalogUploadTable, ClaimTable, ContactTable, ImageBulkUploadTable, InfluencerCampaignTable, InventoryTable, OrderTable, PaymentTable, PanelUserTable, PricingTable, ProductTable, ProjectTable, PromotionTable, QualityTable, ReturnTable, WarehouseTable
 import csv
 import io
@@ -29,9 +29,9 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse
-from shop.models import SupplierProfile
+from shop.models import SupplierProfile, SiteSettings
 from .forms import (
-    WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
+    CategoryModeSettingsForm, WhatsAppSettingsForm, BankDetailsForm, TaxDetailsForm,
     SupplierSignatureForm, EmailNotificationsForm,
 )
 from django.conf import settings
@@ -725,6 +725,12 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     def is_ajax(self):
         return self.request.headers.get("x-requested-with") == "XMLHttpRequest"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        supplier, _ = SupplierProfile.objects.get_or_create(user=self.request.user)
+        kwargs["supplier"] = supplier
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"].helper.form_tag = False
@@ -749,6 +755,8 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
         if form.is_valid() and image_formset.is_valid() and variant_formset.is_valid():
             self.object = form.save()
+            self.object.supplier, _ = SupplierProfile.objects.get_or_create(user=request.user)
+            self.object.save(update_fields=["supplier", "updated"])
             image_formset.instance = self.object
             image_formset.save()
             variant_formset.instance = self.object
@@ -784,6 +792,12 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
     def is_ajax(self):
         return self.request.headers.get("x-requested-with") == "XMLHttpRequest"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        supplier, _ = SupplierProfile.objects.get_or_create(user=self.request.user)
+        kwargs["supplier"] = supplier
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"].helper.form_tag = False
@@ -812,6 +826,9 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
 
         if form.is_valid() and image_formset.is_valid() and variant_formset.is_valid():
             self.object = form.save()
+            if self.object.supplier_id is None:
+                self.object.supplier, _ = SupplierProfile.objects.get_or_create(user=request.user)
+                self.object.save(update_fields=["supplier", "updated"])
             image_formset.save()
             variant_formset.save()
 
@@ -843,7 +860,6 @@ class ProductDeleteView(AjaxModalDeleteMixin, LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Product “{self.object.name}” deleted.")
         return super().form_valid(form)
-
 
 # --- Payments: full CRUD (tables2 + django-filter + crispy form + messages) ---
 class PaymentListView(LoginRequiredMixin, SingleTableMixin, FilterView):
@@ -1192,17 +1208,61 @@ class ReduceRTOReturnsView(LoginRequiredMixin, TemplateView):
         return redirect("crud:pricing_list")
 class BulkCatalogCategoryView(LoginRequiredMixin, TemplateView):
     template_name = "crud/bulk_catalog_category.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        def build_tree(parent=None):
+            qs = Category.objects.filter(parent=parent, is_active=True).order_by("order", "name")
+            tree = []
+            for cat in qs:
+                tree.append({
+                    "id": cat.id,
+                    "name": cat.name,
+                    "slug": cat.slug,
+                    "children": build_tree(cat),
+                })
+            return tree
+
+        # NOTE: pass the raw Python object — NOT json.dumps() —
+        # {% json_script %} in the template handles serialization itself.
+        context["category_data"] = build_tree(parent=None)
+        return context
 class ImageBulkUploadPageView(LoginRequiredMixin, TemplateView):
     template_name = "crud/imagebulkupload_upload.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["products"] = Product.objects.all().order_by("name")
         context["not_allowed_types"] = [
             "Watermark image", "Fake branded/1st copy", "Image with price",
             "Pixelated image", "Inverted image", "Blur/unclear image",
             "Incomplete image", "Stretched/shrunk image", "Image with props", "Image with text",
         ]
         return context
+
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get("product_id")
+        files = request.FILES.getlist("images")
+
+        if not product_id:
+            return JsonResponse({"success": False, "error": "Please select a product."}, status=400)
+        if not files:
+            return JsonResponse({"success": False, "error": "Please select at least one image."}, status=400)
+
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Product not found."}, status=404)
+
+        start_order = product.images.count()
+        created = 0
+        for idx, f in enumerate(files):
+            ProductImage.objects.create(product=product, image=f, order=start_order + idx)
+            created += 1
+
+        messages.success(request, f"{created} image(s) added to “{product.name}”.")
+        return JsonResponse({"success": True, "created": created})
 class InfluencerMarketingDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "crud/influencer_marketing_dashboard.html"
 
@@ -1614,6 +1674,7 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
         context["active_tab"] = self.request.GET.get("tab", "change_password")
         context["password_form"] = kwargs.get("password_form") or PasswordChangeForm(user=self.request.user)
+        context["category_mode_form"] = kwargs.get("category_mode_form") or CategoryModeSettingsForm(instance=SiteSettings.get_solo())
         context["whatsapp_form"] = kwargs.get("whatsapp_form") or WhatsAppSettingsForm(instance=profile)
         context["bank_form"] = kwargs.get("bank_form") or BankDetailsForm(instance=profile)
         context["tax_form"] = kwargs.get("tax_form") or TaxDetailsForm(instance=profile)
@@ -1642,6 +1703,14 @@ class SettingsView(LoginRequiredMixin, TemplateView):
                 messages.success(request, "Password changed successfully.")
                 return redirect(f"{reverse('crud:settings')}?tab=change_password")
             return self.render_to_response(self.get_context_data(password_form=form, active_tab="change_password"))
+
+        elif form_type == "category_mode":
+            form = CategoryModeSettingsForm(request.POST, instance=SiteSettings.get_solo())
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Product category mode updated.")
+                return redirect(f"{reverse('crud:settings')}?tab=category_mode")
+            return self.render_to_response(self.get_context_data(category_mode_form=form, active_tab="category_mode"))
 
         elif form_type == "whatsapp":
             form = WhatsAppSettingsForm(request.POST, instance=profile)
@@ -1682,6 +1751,11 @@ class SettingsView(LoginRequiredMixin, TemplateView):
                 messages.success(request, "Email notification settings updated.")
                 return redirect(f"{reverse('crud:settings')}?tab=email")
             return self.render_to_response(self.get_context_data(email_form=form, active_tab="email"))
+
+
+class CategorySettingsView(LoginRequiredMixin, RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return f"{reverse('crud:settings')}?tab=category_mode"
 
         messages.error(request, "Unknown form submitted.")
         return redirect("crud:settings")

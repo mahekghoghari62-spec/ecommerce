@@ -1,0 +1,34 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Grievance Redressal | My Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold mb-3" style="color: var(--meesho-pink-dark);">Grievance Redressal</h2>
+                <p class="text-muted">
+                    If our support team hasn't fully resolved your issue, you can escalate it to our
+                    Grievance Officer below.
+                </p>
+                <table class="table table-borderless mb-0">
+                    <tbody>
+                        <tr>
+                            <th class="text-muted" style="width:180px;">Name</th>
+                            <td>Priya Shah</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Email</th>
+                            <td><a href="mailto:grievance@myshop.example">grievance@myshop.example</a></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Response Time</th>
+                            <td>Within 5 business days</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

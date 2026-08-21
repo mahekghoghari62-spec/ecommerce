@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -32,8 +33,18 @@ class LoginRequiredMiddleware:
 
         is_exempt = any(path.startswith(prefix) for prefix in self.EXEMPT_PREFIXES)
 
+        if request.user.is_authenticated:
+            if path.startswith("/shop/") and request.user.is_staff:
+                logout(request)
+            if (
+                not path.startswith("/shop/")
+                and not is_exempt
+                and not request.user.is_staff
+            ):
+                return redirect("shop:home")
+
         if not request.user.is_authenticated and not is_exempt:
-            login_url = getattr(settings, "LOGIN_URL", "/login/")
+            login_url = reverse("login")
             return redirect(f"{login_url}?next={path}")
 
         return self.get_response(request)

@@ -1,0 +1,38 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Contact Us | My Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold mb-3" style="color: var(--meesho-pink-dark);">Contact Us</h2>
+                <p class="text-muted">We're happy to help with orders, payments, returns, or anything else.</p>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-envelope-fill" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-1">Email</div>
+                            <a href="mailto:support@myshop.example">support@myshop.example</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-telephone-fill" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-1">Phone</div>
+                            <a href="tel:07940000000">079-40000000</a>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-2" style="color: var(--meesho-pink-dark);">Registered Office</h5>
+                <p class="text-muted mb-0">
+                    MyShop Marketplace Pvt. Limited, Business Bay, Sector 21,<br>
+                    Ahmedabad, 380015, Gujarat, India
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

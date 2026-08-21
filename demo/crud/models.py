@@ -1,7 +1,10 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
+from shop.models import SupplierProfile
 class Company(models.Model):
     INDUSTRY_CHOICES = [
         ("tech", "Technology"), ("finance", "Finance"), ("health", "Healthcare"),
@@ -451,7 +454,10 @@ class Product(models.Model):
     ]
 
     name = models.CharField(max_length=150)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
+    legacy_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other", blank=True)
+    category = models.ForeignKey(
+        "Category", on_delete=models.SET_NULL, null=True, blank=True, related_name="products"
+    )
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     gst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="GST % e.g. 18.00")
@@ -459,6 +465,9 @@ class Product(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    supplier = models.ForeignKey(
+    SupplierProfile, on_delete=models.CASCADE, null=True, blank=True, related_name="crud_products"
+)
 
     class Meta:
         ordering = ["name"]
@@ -476,7 +485,8 @@ class Product(models.Model):
     @property
     def selling_price(self):
         gst_amount = (self.price * self.gst_percent) / 100
-        return self.price + gst_amount
+        total = self.price + gst_amount
+        return total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @property
     def average_rating(self):
@@ -827,6 +837,7 @@ class PanelUser(models.Model):
         ("admin", "Admin"),
         ("manager", "Manager"),
         ("staff", "Staff"),
+        ("user", "User"),
     ]
     STATUS_CHOICES = [
         ("active", "Active"),
@@ -921,3 +932,39 @@ class ProductReview(models.Model):
         if self.user:
             return self.user.get_full_name() or self.user.username
         return "Anonymous"
+from django.utils.text import slugify
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    parent = models.ForeignKey(
+        "self", null=True, blank=True,
+        on_delete=models.CASCADE, related_name="children"
+    )
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return f"{self.parent} > {self.name}" if self.parent_id else self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            i = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                i += 1
+                slug = f"{base_slug}-{i}"
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def get_descendant_ids(self):
+        ids = [self.id]
+        for child in self.children.all():
+            ids += child.get_descendant_ids()
+        return ids

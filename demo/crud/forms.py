@@ -8,9 +8,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.forms import inlineformset_factory
 
-from shop.models import SupplierProfile
+from shop.models import CustomerProfile, SupplierProfile
 from .models import (
-    Advertisement, CatalogUpload, CallbackRequest, Claim, Contact,
+    Advertisement, CatalogUpload, CallbackRequest, Claim, Contact, Category,
     ImageBulkUpload, Inventory, InfluencerCampaign, Order, Quality,
     Return, Pricing, Product, ProductImage, ProductVariant, Promotion,
     Payment, Warehouse, PanelUser
@@ -514,8 +514,25 @@ class ProductForm(forms.ModelForm):
             raise forms.ValidationError("GST percent must be between 0 and 100.")
         return gst
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, supplier=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if supplier is not None:
+            if supplier.category_mode == "single":
+                clothes = Category.objects.filter(name="Clothes", parent__isnull=True).first()
+                allowed_ids = [clothes.id] if clothes else []
+                if clothes:
+                    allowed_ids += list(
+                        Category.objects.filter(
+                            parent=clothes, name__in=["Men", "Women", "Kids"], is_active=True
+                        ).values_list("id", flat=True)
+                    )
+                self.fields["category"].queryset = Category.objects.filter(
+                    id__in=allowed_ids, is_active=True
+                )
+            else:
+                self.fields["category"].queryset = Category.objects.filter(is_active=True)
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.attrs = {"enctype": "multipart/form-data"}
@@ -541,7 +558,6 @@ class ProductForm(forms.ModelForm):
                 ),
             ),
         )
-
 
 class PaymentForm(forms.ModelForm):
     class Meta:
@@ -1024,6 +1040,14 @@ class WhatsAppSettingsForm(forms.ModelForm):
         return number
 
 
+class CategoryModeSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProfile
+        fields = ["category_mode"]
+        widgets = {
+            "category_mode": forms.RadioSelect,
+        }
+
 class BankDetailsForm(forms.ModelForm):
     class Meta:
         model = SupplierProfile
@@ -1284,7 +1308,9 @@ class PanelUserForm(forms.ModelForm):
 
         user.username = username
         user.email = email
-        user.is_staff = True
+        user.is_staff = panel_user.role != "user"
+        if panel_user.role == "user":
+            user.is_superuser = False
         if password:
             user.set_password(password)
 
@@ -1292,6 +1318,8 @@ class PanelUserForm(forms.ModelForm):
             user.save()
             panel_user.user = user
             panel_user.save()
+            if panel_user.role == "user":
+                CustomerProfile.objects.get_or_create(user=user, defaults={"phone": panel_user.phone})
         return panel_user
 # --- Inline formsets for Product gallery images & size variants ---
 

@@ -1,6 +1,7 @@
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
 
 
 def register(request):
@@ -19,6 +20,12 @@ def register(request):
 
 def lockscreen(request):
     return render(request, "adminlte/auth/lockscreen.html")
+
+
+@csrf_exempt
+def logout_view(request):
+    logout(request)
+    return redirect("login")
 
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm

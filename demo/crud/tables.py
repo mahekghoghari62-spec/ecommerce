@@ -337,7 +337,7 @@ class ProductTable(tables.Table):
         return format_html('<span class="badge text-bg-{}">{}</span>', cls, record.get_status_display())
 
     def render_category(self, record):
-        return record.get_category_display()
+        return record.category.name if record.category else "—"
 
     def render_price(self, value):
         return format_html("${}", f"{value:,.2f}")

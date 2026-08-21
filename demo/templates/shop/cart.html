@@ -32,7 +32,7 @@
 
                     <div class="flex-grow-1">
                         <div class="fw-semibold">{{ item.product.name }}</div>
-                        <div class="fw-bold mt-1">₹{{ item.product.price }}</div>
+                        <div class="fw-bold mt-1">₹{{ item.product.selling_price }}</div>
 
                         <div class="d-flex align-items-center gap-3 mt-2">
                             <form method="post" action="{% url 'shop:update_cart_item' item.id %}" class="d-flex align-items-center border rounded">
@@ -80,7 +80,7 @@
                          alt="{{ item.product.name }}" style="width:90px; height:90px; object-fit:contain;">
                     <div class="flex-grow-1">
                         <div class="fw-semibold">{{ item.product.name }}</div>
-                        <div class="fw-bold mt-1">₹{{ item.product.price }}</div>
+                        <div class="fw-bold mt-1">₹{{ item.product.selling_price }}</div>
                         <div class="d-flex gap-3 mt-2">
                             <form method="post" action="{% url 'shop:move_to_cart' item.id %}">
                                 {% csrf_token %}
@@ -111,7 +111,7 @@
                             <img src="{% if p.image %}{{ p.image.url }}{% else %}https://via.placeholder.com/100{% endif %}"
                                  style="width:100%; height:100px; object-fit:contain;">
                             <div class="small text-truncate mt-2">{{ p.name }}</div>
-                            <div class="fw-bold small">₹{{ p.price }}</div>
+                            <div class="fw-bold small">₹{{ p.selling_price }}</div>
                             <form method="post" action="{% url 'shop:add_to_cart' p.id %}" class="mt-2">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{% url 'shop:cart' %}">

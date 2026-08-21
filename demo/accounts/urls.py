@@ -2,6 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
+from .forms import AdminLoginForm
 
 urlpatterns = [
     path(
@@ -10,12 +11,13 @@ urlpatterns = [
             # Demo login page: extends the package auth card, pre-fills the seeded
             # credentials and explains the demo layout.
             template_name="accounts/login.html",
-            # Already signed in? Skip the login page and go to the dashboard.
-            redirect_authenticated_user=True,
+            authentication_form=AdminLoginForm,
+            # Keep the form available so a shop user can switch to an admin account.
+            redirect_authenticated_user=False,
         ),
         name="login",
     ),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", views.logout_view, name="logout"),
     path("register/", views.register, name="register"),
     path("lockscreen/", views.lockscreen, name="lockscreen"),
     # Built-in password change + reset flow (AdminLTE-themed registration/* templates).

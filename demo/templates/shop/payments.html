@@ -1,0 +1,41 @@
+{% extends "shop/base_shop.html" %}
+{% block title %}Payments | My Shop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold mb-4" style="color: var(--meesho-pink-dark);">Payments</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-phone fs-3" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-2">UPI</div>
+                            <div class="text-muted small">Instant, no extra fee</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-credit-card-2-front fs-3" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-2">Cards</div>
+                            <div class="text-muted small">Credit, debit &amp; EMI</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center" style="background: var(--meesho-pink-light);">
+                            <i class="bi bi-cash-coin fs-3" style="color: var(--meesho-pink);"></i>
+                            <div class="fw-semibold mt-2">Cash on Delivery</div>
+                            <div class="text-muted small">On eligible pincodes</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted mt-4 mb-0">
+                    Questions about a payment? Write to
+                    <a href="mailto:support@myshop.example?subject=Payment%20Query">support@myshop.example</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
