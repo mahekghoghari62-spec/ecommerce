@@ -6,64 +6,91 @@
     <title>{% block title %}My Shop{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
     <link rel="stylesheet" href="{% static 'adminlte/dist/css/bootstrap-icons.min.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --meesho-pink: #9F2089;
-            --meesho-pink-dark: #6E1560;
-            --meesho-pink-light: #FCE9F9;
+            --msh-sand: #F0EBE1;
+            --msh-sand-soft: #F7F4EE;
+            --msh-ink: #141414;
+            --msh-ink-soft: #4A4640;
+            --msh-line: #D8D0C0;
+            --msh-accent: #C1440E;
+            --msh-accent-dark: #9B360A;
         }
 
-        .cat-strip {
-            display: flex;
-            justify-content: space-between;
-            overflow-x: auto;
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--msh-sand);
+            color: var(--msh-ink);
+        }
+
+        a { transition: color .15s ease, opacity .15s ease; }
+
+        /* ---------- Announcement / marquee strip ---------- */
+        .msh-marquee {
+            background: var(--msh-ink);
+            color: var(--msh-sand);
+            overflow: hidden;
             white-space: nowrap;
-            scrollbar-width: none;
+            padding: 8px 0;
         }
-        .cat-strip::-webkit-scrollbar { display: none; }
-        .cat-item {
-            display: inline-flex; flex-direction: column; align-items: center;
-            flex-shrink: 0;
-            width: 90px; padding: 10px 4px; color: #212121; text-decoration: none;
-            border-bottom: 3px solid transparent;
+        .msh-marquee-track {
+            display: inline-flex;
+            align-items: center;
+            animation: msh-scroll 28s linear infinite;
         }
-        .cat-item.active { color: var(--meesho-pink); border-bottom-color: var(--meesho-pink); font-weight: 600; }
-        .cat-item:hover { color: var(--meesho-pink); }
-        .cat-item i { font-size: 1.6rem; margin-bottom: 4px; }
-        .cat-item span { font-size: 0.8rem; }
+        .msh-marquee-track span {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 0 1.4rem;
+        }
+        .msh-marquee-track span.msh-star { color: var(--msh-accent); padding: 0 0.4rem; }
+        @keyframes msh-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .msh-marquee-track { animation: none; }
+        }
 
-        /* ---------- Top header: single row, professional layout ---------- */
+        /* ---------- Top header ---------- */
         .msh-topheader {
-            background: #fff;
-            border-bottom: 1px solid #eee;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            background: var(--msh-sand-soft);
+            border-bottom: 1px solid var(--msh-line);
         }
-
         .msh-header-row {
             display: flex;
             align-items: center;
-            gap: 28px;
-            padding: 14px 0;
+            gap: 24px;
+            padding: 18px 0;
             flex-wrap: wrap;
         }
-
         .msh-logo-chip {
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            background: var(--meesho-pink-light);
-            border-radius: 8px;
-            padding: 9px 16px;
+            line-height: 1;
             text-decoration: none;
             flex-shrink: 0;
-            transition: background 0.15s ease;
         }
-        .msh-logo-chip:hover { background: #f8d9f2; }
         .msh-logo-chip .brand-text {
-            font-weight: 800;
-            font-style: italic;
-            letter-spacing: -0.4px;
-            color: var(--meesho-pink-dark);
-            font-size: 1.12rem;
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+            color: var(--msh-ink);
+        }
+        .msh-logo-chip .brand-sub {
+            font-size: 0.55rem;
+            letter-spacing: 4px;
+            color: var(--msh-ink-soft);
+            text-transform: uppercase;
+            margin-top: 1px;
         }
 
         .msh-search-wrap {
@@ -71,16 +98,13 @@
             max-width: 640px;
             display: flex;
             align-items: stretch;
-            border: 1.5px solid #e3d3e0;
-            border-radius: 8px;
+            border: 1.5px solid var(--msh-line);
+            border-radius: 0;
             overflow: hidden;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
             background: #fff;
+            transition: border-color .15s ease;
         }
-        .msh-search-wrap:focus-within {
-            border-color: var(--meesho-pink);
-            box-shadow: 0 0 0 3px var(--meesho-pink-light);
-        }
+        .msh-search-wrap:focus-within { border-color: var(--msh-ink); }
         .msh-search-icon-btn {
             display: flex;
             align-items: center;
@@ -89,19 +113,19 @@
             flex-shrink: 0;
             background: #fff;
             border: none;
-            color: var(--meesho-pink);
-            font-size: 0.95rem;
+            color: var(--msh-ink);
+            font-size: 0.9rem;
         }
         .msh-search-input {
             border: none;
             outline: none;
             box-shadow: none;
             padding: 10px 14px 10px 0;
-            font-size: 0.92rem;
+            font-size: 0.85rem;
             width: 100%;
             background: transparent;
         }
-        .msh-search-input::placeholder { color: #9a8b97; }
+        .msh-search-input::placeholder { color: #a8a196; }
 
         .msh-location {
             flex-shrink: 0;
@@ -110,161 +134,197 @@
             gap: 6px;
             white-space: nowrap;
         }
-        .msh-location i.bi-geo-alt-fill { color: var(--meesho-pink); font-size: 1.05rem; }
+        .msh-location i.bi-geo-alt-fill { color: var(--msh-accent); font-size: 1rem; }
         .msh-location-label {
-            font-size: 0.7rem;
-            color: #8a8a8a;
+            font-size: 0.65rem;
+            color: var(--msh-ink-soft);
             line-height: 1.2;
             margin-bottom: 1px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .msh-location-link {
-            color: #212121 !important;
+            color: var(--msh-ink) !important;
             text-decoration: none !important;
             font-weight: 600;
-            font-size: 0.84rem;
+            font-size: 0.82rem;
             display: inline-flex;
             align-items: center;
             gap: 3px;
             line-height: 1.2;
         }
-        .msh-location-link:hover { color: var(--meesho-pink) !important; }
+        .msh-location-link:hover { color: var(--msh-accent) !important; }
 
         .msh-header-actions {
             display: flex;
             align-items: center;
-            gap: 22px;
+            gap: 20px;
             margin-left: auto;
             flex-shrink: 0;
         }
-        .msh-header-divider {
-            width: 1px;
-            height: 26px;
-            background: #ececec;
-            flex-shrink: 0;
-        }
+        .msh-header-divider { width: 1px; height: 24px; background: var(--msh-line); flex-shrink: 0; }
 
         .msh-navlink-light {
-            color: #212121 !important;
+            color: var(--msh-ink) !important;
             text-decoration: none !important;
-            font-size: 0.88rem;
-            font-weight: 500;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
             transition: color 0.15s ease;
         }
-        .msh-navlink-light:hover { color: var(--meesho-pink) !important; }
+        .msh-navlink-light:hover { color: var(--msh-accent) !important; }
 
-        .msh-link-pink { color: var(--meesho-pink); text-decoration: none; }
-        .msh-btn-pink { background: var(--meesho-pink); border: none; }
-        .msh-btn-pink:hover { background: var(--meesho-pink-dark); color: #fff; }
+        .msh-link-pink { color: var(--msh-accent); text-decoration: none; }
+        .msh-btn-pink {
+            background: var(--msh-ink);
+            border: none;
+            border-radius: 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+        }
+        .msh-btn-pink:hover { background: var(--msh-accent); color: #fff; }
 
         .cart-icon-wrap { position: relative; display: inline-flex; }
         .cart-badge {
             position: absolute; top: -7px; right: -11px;
-            background: #ff6161; color: #fff; font-size: 0.62rem;
+            background: var(--msh-accent); color: #fff; font-size: 0.6rem;
             border-radius: 50%; padding: 1px 5px; font-weight: 700;
-            border: 1.5px solid #fff;
+            border: 1.5px solid var(--msh-sand-soft);
         }
 
         .msh-dropdown-toggle::after { display: none; }
+        .dropdown-menu { border-radius: 0; border-color: var(--msh-line); }
+        .dropdown-item:active { background: var(--msh-ink); }
 
-        footer.msh-footer {
-            background: #2b0a26;
+        /* ---------- Category strip ---------- */
+        .cat-strip {
+            display: flex;
+            justify-content: flex-start;
+            gap: 2.2rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+            padding: 12px 0;
         }
+        .cat-strip::-webkit-scrollbar { display: none; }
+        .cat-item {
+            display: inline-flex; align-items: center; gap: 6px;
+            flex-shrink: 0;
+            padding: 4px 0; color: var(--msh-ink-soft); text-decoration: none;
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid transparent;
+        }
+        .cat-item.active { color: var(--msh-ink); border-bottom-color: var(--msh-accent); }
+        .cat-item:hover { color: var(--msh-ink); }
+        .cat-item i { font-size: 0.95rem; }
 
-        /* Add-to-cart widget: button + quantity stepper */
+        /* ---------- Cart widget / add-to-cart ---------- */
         .msh-cart-widget { width: 100%; }
         .btn-msh {
-            background: var(--meesho-pink);
+            background: var(--msh-ink);
             border: none;
+            border-radius: 0;
             color: #fff;
             font-weight: 600;
-            font-size: 0.82rem;
-            border-radius: 6px;
-            padding: 0.4rem 0;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.55rem 0;
             width: 100%;
+            transition: background .15s ease;
         }
-        .btn-msh:hover { background: var(--meesho-pink-dark); color: #fff; }
-        .btn-msh:disabled { opacity: 0.7; }
+        .btn-msh:hover { background: var(--msh-accent); color: #fff; }
+        .btn-msh:disabled { opacity: 0.6; }
 
         .msh-qty-stepper {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid var(--meesho-pink);
-            border-radius: 6px;
+            border: 1px solid var(--msh-ink);
             overflow: hidden;
         }
         .msh-qty-btn {
-            background: var(--meesho-pink-light);
+            background: var(--msh-sand);
             border: none;
-            color: var(--meesho-pink-dark);
+            color: var(--msh-ink);
             font-weight: 700;
             font-size: 1rem;
             width: 34px;
             height: 32px;
             line-height: 1;
         }
-        .msh-qty-btn:hover { background: var(--meesho-pink); color: #fff; }
+        .msh-qty-btn:hover { background: var(--msh-ink); color: #fff; }
         .msh-qty-value {
             flex-grow: 1;
             text-align: center;
             font-weight: 700;
             font-size: 0.85rem;
-            color: #222;
+            color: var(--msh-ink);
         }
 
-        /* Toast */
+        /* ---------- Toast ---------- */
         .msh-toast {
             position: fixed;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: #2b0a26;
+            background: var(--msh-ink);
             color: #fff;
             padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
+            border-radius: 0;
+            font-size: 0.82rem;
             opacity: 0;
             transition: opacity .25s ease, transform .25s ease;
             z-index: 2000;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
         .msh-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .msh-toast i { color: #ff8fd6; margin-right: 6px; }
+        .msh-toast i { color: var(--msh-accent); margin-right: 6px; }
 
-        .msh-footer { background: #2b0a26; font-size: 0.85rem; }
+        /* ---------- Footer ---------- */
+        .msh-footer { background: var(--msh-ink); color: #fff; font-size: 0.85rem; }
         .msh-footer-heading {
-            color: #9a9a9a;
-            font-size: 0.78rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            margin-bottom: 0.7rem;
+            font-family: 'Archivo Black', sans-serif;
+            color: #fff;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.9rem;
+            text-transform: uppercase;
         }
         .msh-footer-link {
             display: block;
-            color: #fff;
+            color: #cfcac0;
             text-decoration: none;
             margin-bottom: 0.6rem;
-            font-size: 0.85rem;
+            font-size: 0.83rem;
         }
-        .msh-footer-link:hover { color: #ff8fd6; }
-        .msh-footer-address {
-            color: #d8d8d8;
-            font-size: 0.82rem;
-            line-height: 1.5;
-        }
+        .msh-footer-link:hover { color: var(--msh-accent); }
+        .msh-footer-address { color: #b8b2a6; font-size: 0.82rem; line-height: 1.6; }
         .msh-social-icon {
-            width: 30px;
-            height: 30px;
+            width: 30px; height: 30px;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            text-decoration: none;
-            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.25);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; text-decoration: none; font-size: 0.85rem;
         }
-        .msh-social-icon:hover { background: var(--meesho-pink); border-color: var(--meesho-pink); }
+        .msh-social-icon:hover { background: var(--msh-accent); border-color: var(--msh-accent); }
+        .msh-newsletter-input {
+            border: 1px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: #fff;
+            border-radius: 0;
+        }
+        .msh-newsletter-input::placeholder { color: #a8a196; }
+        .msh-newsletter-btn {
+            background: var(--msh-accent);
+            border: none;
+            color: #fff;
+            border-radius: 0;
+        }
+        .msh-newsletter-btn:hover { background: var(--msh-accent-dark); color: #fff; }
 
         @media (max-width: 767.98px) {
             .msh-header-row { gap: 14px; }
@@ -275,14 +335,29 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-body-secondary">
+<body>
+
+<!-- Signature marquee strip -->
+<div class="msh-marquee">
+    <div class="msh-marquee-track">
+        <span>Premium Embroidery Collection</span><span class="msh-star">✦</span>
+        <span>Premium Quality</span><span class="msh-star">✦</span>
+        <span>Free Delivery Available</span><span class="msh-star">✦</span>
+        <span>7 Days Easy Return</span><span class="msh-star">✦</span>
+        <span>Premium Embroidery Collection</span><span class="msh-star">✦</span>
+        <span>Premium Quality</span><span class="msh-star">✦</span>
+        <span>Free Delivery Available</span><span class="msh-star">✦</span>
+        <span>7 Days Easy Return</span><span class="msh-star">✦</span>
+    </div>
+</div>
 
 <!-- Top header: logo, search, location, account links — single professional row -->
 <header class="msh-topheader">
     <div class="container-fluid px-4">
         <div class="msh-header-row">
             <a class="msh-logo-chip" href="{% url 'shop:home' %}">
-                <span class="brand-text">🛍️ MyShop</span>
+                <span class="brand-text">MyShop</span>
+                <span class="brand-sub">style</span>
             </a>
 
             <form class="msh-search-wrap" role="search">
@@ -375,8 +450,8 @@
     </div>
 </header>
 
-<!-- Category icon strip -->
-<div class="bg-white shadow-sm">
+<!-- Category nav strip -->
+<div class="bg-white shadow-sm" style="border-bottom:1px solid var(--msh-line);">
     <div class="container-fluid px-4 cat-strip">
         <a href="{% url 'shop:home' %}" class="cat-item {% if not current_category %}active{% endif %}">
             <i class="bi bi-grid-fill"></i>
@@ -390,15 +465,35 @@
         {% endfor %}
     </div>
 </div>
-<main class="container-fluid px-4 my-4">
+
+{% if messages %}
+<div class="container-fluid px-4 mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} py-2" style="border-radius:0;">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main class="my-0">
     {% block content %}{% endblock %}
 </main>
 
-<footer class="msh-footer text-white mt-5">
+<footer class="msh-footer mt-5">
+    <div class="container-fluid px-4 py-3 d-flex flex-wrap align-items-center justify-content-between gap-3" style="border-bottom:1px solid rgba(255,255,255,0.12);">
+        <div>
+            <div class="msh-footer-heading mb-1">Subscribe to Get Free Shipping</div>
+            <div class="msh-footer-address mb-0" style="font-size:0.78rem;">Subscribe for store updates and discounts.</div>
+        </div>
+        <form class="d-flex" style="max-width:340px; width:100%;">
+            <input type="email" class="form-control msh-newsletter-input" placeholder="Enter your email...">
+            <button type="submit" class="btn msh-newsletter-btn ms-2 px-3"><i class="bi bi-send"></i></button>
+        </form>
+    </div>
+
     <div class="container-fluid px-4 py-4">
         <div class="row gy-4">
             <div class="col-6 col-md-2">
-                <div class="msh-footer-heading">ABOUT</div>
+                <div class="msh-footer-heading">About</div>
                 <a href="{% url 'shop:contact_us' %}" class="msh-footer-link">Contact Us</a>
                 <a href="{% url 'shop:about_us' %}" class="msh-footer-link">About Us</a>
                 <a href="{% url 'shop:careers' %}" class="msh-footer-link">Careers</a>
@@ -407,14 +502,14 @@
                 <a href="{% url 'shop:corporate_information' %}" class="msh-footer-link">Corporate Information</a>
             </div>
             <div class="col-6 col-md-2">
-                <div class="msh-footer-heading">HELP</div>
+                <div class="msh-footer-heading">Help</div>
                 <a href="{% url 'shop:payments' %}" class="msh-footer-link">Payments</a>
                 <a href="{% url 'shop:policy_detail' 'logistics-policy' %}" class="msh-footer-link">Shipping</a>
                 <a href="{% url 'shop:policy_detail' 'return-claims-policy' %}" class="msh-footer-link">Cancellation &amp; Returns</a>
                 <a href="{% url 'shop:faq' %}" class="msh-footer-link">FAQ</a>
             </div>
             <div class="col-6 col-md-2">
-                <div class="msh-footer-heading">CONSUMER POLICY</div>
+                <div class="msh-footer-heading">Consumer Policy</div>
                 <a href="{% url 'shop:policy_detail' 'return-claims-policy' %}" class="msh-footer-link">Cancellation &amp; Returns</a>
                 <a href="{% url 'shop:policy_detail' 'terms-and-conditions' %}" class="msh-footer-link">Terms Of Use</a>
                 <a href="{% url 'shop:policy_detail' 'anti-phishing-policy' %}" class="msh-footer-link">Security</a>
@@ -424,14 +519,14 @@
             </div>
             <div class="col-md-1 d-none d-md-block" style="border-left: 1px solid rgba(255,255,255,0.15);"></div>
             <div class="col-6 col-md-2">
-                <div class="msh-footer-heading">Mail Us:</div>
+                <div class="msh-footer-heading">Mail Us</div>
                 <div class="msh-footer-address">
                     MyShop Marketplace Pvt. Limited,<br>
                     Business Bay, Sector 21,<br>
                     Ahmedabad, 380015,<br>
                     Gujarat, India
                 </div>
-                <div class="msh-footer-heading mt-3">Social:</div>
+                <div class="msh-footer-heading mt-3">Social</div>
                 <div class="d-flex gap-2 mt-2">
                     <a href="https://facebook.com" target="_blank" rel="noopener" class="msh-social-icon"><i class="bi bi-facebook"></i></a>
                     <a href="https://twitter.com" target="_blank" rel="noopener" class="msh-social-icon"><i class="bi bi-twitter-x"></i></a>
@@ -440,7 +535,7 @@
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="msh-footer-heading">Registered Office Address:</div>
+                <div class="msh-footer-heading">Registered Office Address</div>
                 <div class="msh-footer-address">
                     MyShop Marketplace Pvt. Limited,<br>
                     Business Bay, Sector 21,<br>

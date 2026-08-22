@@ -11,116 +11,100 @@
         --meesho-pink-dark: #6E1560;
         --meesho-pink-light: #FCE9F9;
     }
-    .msh-banner-strip { position: relative; }
-    .msh-banner-viewport {
+
+    /* ---------- Hero slider (full-bleed, Lecsudo-style) ---------- */
+    .msh-hero-slider { margin-bottom: 1.75rem; }
+    .msh-hero-viewport {
         position: relative;
         border-radius: 16px;
         overflow: hidden;
-        min-height: 240px;
+        height: 480px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     }
-    .msh-banner-track {
+    .msh-hero-track {
         display: flex;
-        transition: transform .5s ease;
+        height: 100%;
+        transition: transform .6s ease;
         will-change: transform;
     }
-    .msh-banner-card {
+    .msh-hero-slide {
         flex: 0 0 100%;
-        min-height: 240px;
-        padding: 2.75rem 5.5rem;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
+        height: 100%;
+        display: flex;
+        align-items: stretch;
+    }
+    .msh-hero-text-panel {
+        flex: 0 0 42%;
+        max-width: 520px;
+        background: linear-gradient(155deg, #241a1a 0%, #3a2b26 100%);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 1.5rem;
+        padding: 0 3.5rem;
     }
-    .msh-banner-card::after {
-        content: "";
-        position: absolute;
-        right: -80px;
-        top: -80px;
-        width: 260px;
-        height: 260px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 50%;
+    .msh-hero-image-panel {
+        flex: 1 1 auto;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(120deg, #C2185B 0%, #9F2089 55%, #6E1560 100%);
     }
-    .msh-banner-card::before {
-        content: "";
-        position: absolute;
-        right: 60px;
-        bottom: -60px;
-        width: 140px;
-        height: 140px;
-        background: rgba(255,255,255,0.06);
-        border-radius: 50%;
+    .msh-hero-image-panel img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 20%;
+        display: block;
     }
-    .msh-banner-text { max-width: 60%; z-index: 1; }
-    .msh-banner-badge {
-        display: inline-block;
-        background: rgba(255,255,255,0.18);
-        border: 1px solid rgba(255,255,255,0.4);
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-        padding: 4px 12px;
-        border-radius: 20px;
+    @media (max-width: 768px) {
+        .msh-hero-text-panel { flex-basis: 100%; max-width: 100%; padding: 0 2rem; position: relative; z-index: 2; }
+        .msh-hero-image-panel { display: none; }
+        .msh-hero-slide { background-size: cover; background-position: center; }
+    }
+    .msh-hero-content { max-width: 480px; color: #fff; }
+    .msh-hero-brand {
+        font-weight: 900;
+        font-size: 4rem;
+        letter-spacing: -2px;
+        line-height: 0.95;
+        margin-bottom: 0.2rem;
+    }
+    .msh-hero-brand-sub {
+        font-size: 1.15rem;
+        letter-spacing: 10px;
+        font-weight: 600;
         margin-bottom: 0.9rem;
     }
-    .msh-banner-card h2 {
-        font-weight: 800;
-        font-size: 1.9rem;
-        letter-spacing: -0.5px;
-        line-height: 1.15;
-        margin-bottom: 0.5rem;
+    .msh-hero-spark { font-size: 1rem; opacity: 0.85; margin-bottom: 0.9rem; }
+    .msh-hero-tagline {
+        font-size: 0.82rem;
+        letter-spacing: 2px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 1.8rem;
+        opacity: 0.95;
     }
-    .msh-banner-card p {
-        opacity: 0.9;
-        margin-bottom: 1.2rem;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-    .msh-banner-cta {
+    .msh-hero-cta {
         display: inline-block;
         background: #fff;
-        color: #222;
+        color: #1a1a1a;
         font-weight: 700;
-        font-size: 0.85rem;
-        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+        padding: 0.85rem 2.1rem;
         border-radius: 30px;
         text-decoration: none;
         transition: transform .15s ease, box-shadow .15s ease;
     }
-    .msh-banner-cta:hover {
+    .msh-hero-cta:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        color: #222;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+        color: #1a1a1a;
     }
-    .msh-banner-img {
-        width: 130px;
-        height: 130px;
-        object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        z-index: 1;
-        flex-shrink: 0;
-    }
-    @media (max-width: 576px) {
-        .msh-banner-card { padding: 2rem 3.25rem; min-height: 220px; }
-        .msh-banner-text { max-width: 100%; }
-        .msh-banner-card h2 { font-size: 1.4rem; }
-        .msh-banner-card p { font-size: 0.85rem; }
-        .msh-banner-img { width: 90px; height: 90px; }
-    }
-    .msh-banner-nav {
+
+    .msh-hero-nav {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        width: 38px;
-        height: 38px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background: rgba(255,255,255,0.92);
         border: none;
@@ -128,17 +112,17 @@
         align-items: center;
         justify-content: center;
         color: #333;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         cursor: pointer;
         z-index: 3;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         transition: background .15s ease, transform .15s ease;
     }
-    .msh-banner-nav:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
-    .msh-banner-prev { left: 16px; }
-    .msh-banner-next { right: 16px; }
+    .msh-hero-nav:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+    .msh-hero-prev { left: 20px; }
+    .msh-hero-next { right: 20px; }
 
-    .msh-banner-dots {
+    .msh-hero-dots {
         display: flex;
         justify-content: center;
         gap: 6px;
@@ -155,6 +139,18 @@
         transition: background .2s ease, width .2s ease;
     }
     .msh-dot.active { background: var(--meesho-pink); width: 20px; border-radius: 4px; }
+
+    @media (max-width: 768px) {
+        .msh-hero-viewport { height: 380px; }
+        .msh-hero-brand { font-size: 2.6rem; }
+        .msh-hero-brand-sub { font-size: 0.9rem; letter-spacing: 6px; }
+        .msh-hero-tagline { font-size: 0.7rem; }
+    }
+    @media (max-width: 480px) {
+        .msh-hero-viewport { height: 320px; }
+        .msh-hero-brand { font-size: 2rem; }
+    }
+
     .msh-cat-strip {
         display: flex;
         gap: 1.1rem;
@@ -268,14 +264,31 @@
         color: #9a9a9a;
         margin-bottom: 0.35rem;
     }
+    .msh-star-rating {
+        position: relative;
+        display: inline-block;
+        font-size: 0.78rem;
+        line-height: 1;
+        letter-spacing: 2px;
+        margin-bottom: 0.35rem;
+    }
+    .msh-star-rating-bg { color: #ddd; }
+    .msh-star-rating-fg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: #e8b923;
+        overflow: hidden;
+        white-space: nowrap;
+    }
     .msh-price-row {
         display: flex;
         align-items: baseline;
         gap: 0.4rem;
         margin-bottom: 0.15rem;
     }
-    .msh-price { font-weight: 800; font-size: 0.98rem; color: #222; }
-    .msh-mrp { font-size: 0.78rem; color: #9a9a9a; text-decoration: line-through; }
+    .msh-price { font-weight: 800; font-size: 0.98rem; color: #e04b1a; }
+    .msh-mrp { font-size: 0.82rem; color: #9a9a9a; text-decoration: line-through; }
     .msh-off { font-size: 0.78rem; color: #1a9e5c; font-weight: 700; }
     .msh-delivery { font-size: 0.68rem; color: #1a9e5c; margin-bottom: 0.5rem; }
     .msh-delivery i { margin-right: 2px; }
@@ -316,15 +329,16 @@
     }
     .msh-rating-badge i { font-size: 0.6rem; }
     .btn-msh {
-        background: var(--meesho-pink);
+        background: #1a1a1a;
         border: none;
         color: #fff;
         font-weight: 600;
         font-size: 0.82rem;
         border-radius: 6px;
         padding: 0.4rem 0;
+        letter-spacing: 0.4px;
     }
-    .btn-msh:hover { background: var(--meesho-pink-dark); color: #fff; }
+    .btn-msh:hover { background: #000; color: #fff; }
 
     .msh-empty {
         text-align: center;
@@ -386,50 +400,59 @@
         .msh-promo-sub { font-size: 1.2rem; }
     }
 </style>
-<!-- Banner strip: horizontal scroll, multiple cards partially visible -->
-<div class="msh-banner-strip mb-4">
-    <div class="msh-banner-viewport">
-        <div class="msh-banner-track" id="mshBannerTrack">
-            <div class="msh-banner-card" style="background: linear-gradient(120deg, #C2185B 0%, #9F2089 55%, #6E1560 100%);">
-                <div class="msh-banner-text">
-                    <span class="msh-banner-badge">Limited Time</span>
-                    <h2>Big Sale is Live 🔥</h2>
-                    <p>Up to 50% off on top categories — grab your favorites before they're gone.</p>
-                    <a href="{% url 'shop:category' 'clothes' %}" class="msh-banner-cta">Shop Now</a>
+
+<!-- Hero slider: full-bleed product photo + brand wordmark, auto-slides every ~4.5s -->
+<div class="msh-hero-slider">
+    <div class="msh-hero-viewport">
+        <div class="msh-hero-track" id="mshHeroTrack">
+            {% for product in products %}
+                <div class="msh-hero-slide">
+                    <div class="msh-hero-text-panel">
+                        <div class="msh-hero-content">
+                            <div class="msh-hero-brand">MyShop</div>
+                            <div class="msh-hero-brand-sub">S T Y L E</div>
+                            <div class="msh-hero-spark">✦</div>
+                            <div class="msh-hero-tagline">Wear MyShop, Wear Legacy</div>
+                            <a href="{% url 'shop:product_detail' product.id %}" class="msh-hero-cta">Shop Now</a>
+                        </div>
+                    </div>
+                    {% if product.image %}
+                    <div class="msh-hero-image-panel">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    </div>
+                    {% endif %}
                 </div>
-            </div>
-            <div class="msh-banner-card" style="background: linear-gradient(120deg, #ff7a59 0%, #ff4e50 100%);">
-                <div class="msh-banner-text">
-                    <span class="msh-banner-badge">Today Only</span>
-                    <h2>Flash Sale ⚡ 2–3 PM</h2>
-                    <p>Flat 15% off on select categories during flash hours.</p>
-                    <a href="{% url 'shop:category' 'clothes' %}" class="msh-banner-cta">Shop Now</a>
+            {% empty %}
+                <div class="msh-hero-slide">
+                    <div class="msh-hero-text-panel">
+                        <div class="msh-hero-content">
+                            <div class="msh-hero-brand">MyShop</div>
+                            <div class="msh-hero-brand-sub">S T Y L E</div>
+                            <div class="msh-hero-spark">✦</div>
+                            <div class="msh-hero-tagline">Wear MyShop, Wear Legacy</div>
+                            <a href="{% url 'shop:home' %}" class="msh-hero-cta">Shop Now</a>
+                        </div>
+                    </div>
+                    <div class="msh-hero-image-panel"></div>
                 </div>
-            </div>
-            <div class="msh-banner-card" style="background: linear-gradient(120deg, #1f2937 0%, #0f172a 100%);">
-                <div class="msh-banner-text">
-                    <span class="msh-banner-badge">Just In</span>
-                    <h2>New Arrivals 🚀</h2>
-                    <p>Check out the latest additions to our catalog, updated daily.</p>
-                    <a href="{% url 'shop:category' 'clothes' %}" class="msh-banner-cta">Explore</a>
-                </div>
-            </div>
+            {% endfor %}
         </div>
-        <button type="button" class="msh-banner-nav msh-banner-prev" id="mshBannerPrev" aria-label="Previous">
+        <button type="button" class="msh-hero-nav msh-hero-prev" id="mshHeroPrev" aria-label="Previous">
             <i class="bi bi-chevron-left"></i>
         </button>
-        <button type="button" class="msh-banner-nav msh-banner-next" id="mshBannerNext" aria-label="Next">
+        <button type="button" class="msh-hero-nav msh-hero-next" id="mshHeroNext" aria-label="Next">
             <i class="bi bi-chevron-right"></i>
         </button>
     </div>
-    <div class="msh-banner-dots" id="mshBannerDots">
-        <button type="button" class="msh-dot active" data-index="0" aria-label="Slide 1"></button>
-        <button type="button" class="msh-dot" data-index="1" aria-label="Slide 2"></button>
-        <button type="button" class="msh-dot" data-index="2" aria-label="Slide 3"></button>
+    <div class="msh-hero-dots" id="mshHeroDots">
+        {% for product in products %}
+            <button type="button" class="msh-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+        {% empty %}
+            <button type="button" class="msh-dot active" data-index="0" aria-label="Slide 1"></button>
+        {% endfor %}
     </div>
 </div>
 
-<!-- Products -->
 <!-- Products -->
 <div class="msh-section-title-row mt-3">
     <div class="msh-section-title mb-0" style="border-left: 4px solid var(--meesho-pink); padding-left: 0.6rem;">Suggested For You</div>
@@ -455,9 +478,16 @@
                 <a href="{% url 'shop:product_detail' product.id %}" class="msh-card-title-link">
                     <div class="msh-card-title">{{ product.name }}</div>
                 </a>
+                {% if product.review_count %}
+                <div class="msh-star-rating">
+                    <div class="msh-star-rating-bg">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                    <div class="msh-star-rating-fg" style="width: {% widthratio product.average_rating 5 100 %}%;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                </div>
+                {% endif %}
                 <div class="msh-card-category">{{ product.category.name|default:"Uncategorized" }}</div>
                 <div class="msh-price-row">
-                    <span class="msh-price">₹{{ product.selling_price }}</span>
+                    <span class="msh-price">Rs. {{ product.selling_price }}</span>
+                    {% if product.mrp %}<span class="msh-mrp">Rs. {{ product.mrp }}</span>{% endif %}
                 </div>
                 <div class="msh-delivery"><i class="bi bi-truck"></i>Free Delivery</div>
 
@@ -507,9 +537,16 @@
                 <a href="{% url 'shop:product_detail' product.id %}" class="msh-card-title-link">
                     <div class="msh-card-title">{{ product.name }}</div>
                 </a>
+                {% if product.review_count %}
+                <div class="msh-star-rating">
+                    <div class="msh-star-rating-bg">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                    <div class="msh-star-rating-fg" style="width: {% widthratio product.average_rating 5 100 %}%;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                </div>
+                {% endif %}
                 <div class="msh-card-category">{{ product.category.name|default:"Uncategorized" }}</div>
                 <div class="msh-price-row">
-                    <span class="msh-price">₹{{ product.selling_price }}</span>
+                    <span class="msh-price">Rs. {{ product.selling_price }}</span>
+                    {% if product.mrp %}<span class="msh-mrp">Rs. {{ product.mrp }}</span>{% endif %}
                 </div>
                 <div class="msh-delivery"><i class="bi bi-truck"></i>Free Delivery</div>
                 <form action="{% url 'shop:add_to_cart' product.id %}" method="post" class="add-to-cart-form mt-auto">
@@ -524,10 +561,10 @@
 {% endif %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var track = document.getElementById('mshBannerTrack');
-    var dots = document.querySelectorAll('#mshBannerDots .msh-dot');
-    var prevBtn = document.getElementById('mshBannerPrev');
-    var nextBtn = document.getElementById('mshBannerNext');
+    var track = document.getElementById('mshHeroTrack');
+    var dots = document.querySelectorAll('#mshHeroDots .msh-dot');
+    var prevBtn = document.getElementById('mshHeroPrev');
+    var nextBtn = document.getElementById('mshHeroNext');
     if (!track || !dots.length) return;
 
     var slideCount = dots.length;
@@ -544,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function startAuto() {
         stopAuto();
-        autoTimer = setInterval(function () { goTo(current + 1); }, 4000);
+        autoTimer = setInterval(function () { goTo(current + 1); }, 4500);
     }
 
     function stopAuto() {
@@ -561,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (prevBtn) prevBtn.addEventListener('click', function () { goTo(current - 1); startAuto(); });
     if (nextBtn) nextBtn.addEventListener('click', function () { goTo(current + 1); startAuto(); });
 
-    var viewport = track.closest('.msh-banner-viewport');
+    var viewport = track.closest('.msh-hero-viewport');
     if (viewport) {
         viewport.addEventListener('mouseenter', stopAuto);
         viewport.addEventListener('mouseleave', startAuto);
